@@ -1,0 +1,564 @@
+#! /usr/bin/env python
+
+import sys
+import subprocess
+import termios
+import tty
+from datetime import datetime
+from pathlib import Path
+from sys import platform
+from typing import Optional
+
+
+VERSION = "0.1.0"
+
+
+def paste_from_clipboard() -> str:
+    if platform == "darwin":
+        pbpaste = subprocess.Popen(["pbpaste"], stdout=subprocess.PIPE)
+        stdout, _ = pbpaste.communicate()
+        return stdout.decode("utf-8").strip()
+    elif platform == "linux":
+        xclip = subprocess.Popen(
+            ["xclip", "-selection", "clipboard", "-o"], stdout=subprocess.PIPE
+        )
+        stdout, _ = xclip.communicate()
+        return stdout.decode("utf-8").strip()
+    else:
+        raise RuntimeError(f"Unsupported platform: {platform}")
+
+
+class RFXCustomFormatter:
+    inverted = "\x1b[7;90m"
+    reset = "\x1b[0m"
+
+    @staticmethod
+    def print(message: str, color: str):
+        print(RFXCustomFormatter.format(message, color))
+
+    @staticmethod
+    def format(message: str, color: str):
+        return color + message + RFXCustomFormatter.reset
+
+
+class GitClient:
+    def add_all(self):
+        command = "git add --all"
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(command.split(" "), capture_output=False, text=True)
+
+    def branch_latest(self, all=False):
+        args = [
+            "git",
+            "for-each-ref",
+	           "--sort=committerdate",
+            "--format=%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(color:red)%(objectname:short)%(color:reset) - %(contents:subject) - %(authorname) (%(color:green)%(committerdate:relative)%(color:reset))"
+        ]
+        if not all:
+            args.append("refs/heads/")
+        command = " ".join(args)
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(args, capture_output=False, text=True)
+
+    def commit(self, amend=False, no_edit=False, message=None):
+        args = ["git", "commit"]
+        if amend:
+            args.append("--amend")
+        if no_edit:
+            args.append("--no-edit")
+        if message is not None:
+            args.append("-m")
+            args.append(message)
+        command = " ".join(args)
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(args, capture_output=False, text=True)
+
+    def check_if_git_branch(self, text: str) -> bool:
+        args = ["git", "rev-parse", "--verify", text]
+        command = " ".join(args)
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        try:
+            subprocess.run(args, capture_output=False, check=True, text=True)
+            return True
+        except subprocess.CalledProcessError:
+            return False
+
+    def checkout_existing_branch(self, branch_name: str):
+        assert isinstance(branch_name, str)
+        args = ["git", "checkout", branch_name]
+        command = " ".join(args)
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(args, capture_output=False, check=True, text=True)
+
+    def checkout_new_branch(self, branch_name: str):
+        assert isinstance(branch_name, str)
+        args = ["git", "switch", "-c", branch_name]
+        command = " ".join(args)
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(args, capture_output=False, check=True, text=True)
+
+    def checkout_branch_using_fzf(self):
+        # Get the list of branches, sorted by committer date
+        branches = subprocess.run(
+            ["git", "for-each-ref", "--sort=-committerdate",
+            "--format=%(refname:short)", "refs/heads/"],
+            capture_output=True,
+            text=True,
+            check=True
+        ).stdout.splitlines()
+
+        # Open fzf with terminal interaction
+        fzf = subprocess.Popen(
+            ["fzf", "--ansi", "--prompt=Select branch> "],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            text=True
+        )
+        selected_branch, _ = fzf.communicate(input="\n".join(branches))
+        selected_branch = selected_branch.strip()
+
+        if selected_branch:
+            # Switch to the selected branch
+            subprocess.run(["git", "switch", selected_branch], check=True)
+            print(f"Switched to branch: {selected_branch}")
+        else:
+            print("No branch selected.")
+
+    def diff(self, target=None):
+        args = ["git", "diff"]
+        if target is not None:
+            args.append(target)
+        command = " ".join(args)
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(args, capture_output=False, text=True)
+
+    def fetch(self):
+        command = "git fetch"
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(command.split(" "), capture_output=False, text=True)
+
+    def log(self, commits: Optional[int] = None):
+        args = ["git", "log"]
+        if commits is not None:
+            assert isinstance(commits, int), commits
+            args.append(f"-l{commits}")
+        command = " ".join(args)
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(args, capture_output=False, text=True)
+
+    def push(self, force=False):
+        args = ["git", "push"]
+        if force:
+            args.append("--force")
+        command_color = RFXCustomFormatter.inverted
+        command = " ".join(args)
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(args, capture_output=False, text=True)
+
+    def pull(self):
+        args = ["git", "pull"]
+        command_color = RFXCustomFormatter.inverted
+        command = " ".join(args)
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(args, capture_output=False, text=True)
+
+    def pull_rebase(self):
+        args = ["git", "pull", "--rebase"]
+        command_color = RFXCustomFormatter.inverted
+        command = " ".join(args)
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(args, capture_output=False, text=True)
+
+    def rebase(self, branch: str):
+        assert isinstance(branch, str)
+        command = f"git rebase {branch}"
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(command.split(" "), capture_output=False, text=True)
+
+    def rebase_abort(self):
+        command = f"git rebase --abort"
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(command.split(" "), capture_output=False, text=True)
+
+    def rebase_continue(self):
+        command = f"git rebase --continue"
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(command.split(" "), capture_output=False, text=True)
+
+    def rebase_interactive(self):
+        command = "git rebase origin/main -i"
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(command.split(" "), capture_output=False, text=True)
+
+    def show(self):
+        command = "git show"
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(command.split(" "), capture_output=False, text=True)
+
+    def status(self):
+        status_command = "git status"
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(status_command, command_color)
+        subprocess.run(status_command.split(" "), capture_output=False, text=True)
+
+    def switch_to_main(self):
+        switch_command = "git switch main"
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(switch_command, command_color)
+        subprocess.run(switch_command.split(" "), capture_output=False, text=True)
+
+    def switch_to_previous_branch(self):
+        switch_command = "git switch -"
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(switch_command, command_color)
+        subprocess.run(switch_command.split(" "), capture_output=False, text=True)
+
+    def reset_soft_unstage(self, target=None):
+        args = ["git", "reset"]
+        if target is not None:
+            args.append(target)
+        command = " ".join(args)
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(args, capture_output=False, text=True)
+
+    def reset_hard(self, revision=""):
+        # First, preserve the diff.
+        print("")
+        self._apply_patch()
+        print("")
+
+        revision_argument = revision if len(revision) > 0 else ""
+        reset_command = f"git reset --hard {revision_argument}".rstrip()
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(reset_command, command_color)
+        subprocess.run(reset_command.split(" "), capture_output=False, text=True)
+
+    def clean_all(self):
+        clean_command = "git clean -d --force"
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(clean_command, command_color)
+        subprocess.run(clean_command.split(" "), capture_output=False, text=True)
+
+    def _apply_patch(self):
+        result = subprocess.run("git diff HEAD".split(" "), capture_output=True, text=True)
+        assert result.returncode == 0
+        if len(result.stdout) == 0:
+            print(
+                f"**********************************************************************"
+            )
+            print(f"The diff is empty. Not creating a patch.")
+            print(
+                f"**********************************************************************"
+            )
+            return
+
+        path_to_user_dir = Path.home()
+        patches_dir = path_to_user_dir.joinpath("patches")
+        patches_dir.mkdir(parents=True, exist_ok=True)
+
+        now = datetime.now()
+        formatted_date = now.strftime('%Y%m%d_%H%M%S_%f')
+        path_to_out_patch = patches_dir.joinpath(f"{formatted_date}.patch")
+
+        with open(path_to_out_patch, "w") as out_patch:
+            out_patch.write(result.stdout)
+        print(f"**********************************************************************")
+        print(f"Created a patch: {path_to_out_patch}")
+        print(f"**********************************************************************")
+
+    def is_top_merge_commit(self) -> bool:
+        is_merge = len(subprocess.check_output(
+            ["git", "show", "-s", "--pretty=%P"]
+        ).split()) > 1
+        return is_merge
+
+def get_key():
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(sys.stdin.fileno())
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return ch
+
+
+def main():
+    git_client = GitClient()
+
+    debug = False
+    current_pattern = ""
+
+    escape = False
+
+    while True:
+        c = get_key()
+        current_pattern += c
+
+        if debug:
+            print(c, ord(c), end=None)
+            print(f"PATT: '{current_pattern}'")
+
+        if ord(c) == 3:
+            print("")
+            sys.exit(0)
+
+        # TAB
+        if ord(c) == 9:
+            git_client.fetch()
+            git_client.rebase("origin/main")
+            git_client.status()
+            sys.exit(0)
+
+        # Escape sequence
+        if ord(c) == 27:
+            escape = True
+            current_pattern = "27"
+            continue
+
+        # Backspace
+        if ord(c) == 127:
+            current_pattern = current_pattern[:-2]
+            print(f"Correcting pattern: {current_pattern}")
+            continue
+
+        if escape:
+            # Up
+            if current_pattern == "27[A":
+                git_client.push()
+                git_client.status()
+                sys.exit(0)
+
+            # Shift + Up
+            elif current_pattern == "27[1;2A":
+                git_client.push(force=True)
+                git_client.status()
+                sys.exit(0)
+
+            # Down
+            elif current_pattern == "27[B":
+                git_client.pull()
+                git_client.status()
+                sys.exit(0)
+
+            # Shift + Down
+            elif current_pattern == "27[1;2B":
+                git_client.pull_rebase()
+                git_client.status()
+                sys.exit(0)
+
+            # Left
+            elif current_pattern == "27[D":
+                git_client.switch_to_previous_branch()
+                git_client.status()
+                sys.exit(0)
+
+            # Shift + Left
+            elif current_pattern == "27[1;2D":
+                git_client.rebase_abort()
+                git_client.status()
+                sys.exit(0)
+
+            # Right
+            elif current_pattern == "27[C":
+                git_client.checkout_branch_using_fzf()
+                git_client.status()
+                sys.exit(0)
+
+            # Shift + Right
+            elif current_pattern == "27[1;2C":
+                git_client.rebase_continue()
+                git_client.status()
+                sys.exit(0)
+
+            # Shift+TAB
+            elif current_pattern == "27[Z":
+                git_client.fetch()
+                git_client.rebase_interactive()
+                git_client.status()
+                sys.exit(0)
+
+        else:
+            if c == "A":
+                git_client.add_all()
+                git_client.status()
+                sys.exit(0)
+
+            elif c == "B":
+                git_client.branch_latest()
+                sys.exit(0)
+
+            elif c == "C":
+                git_client.commit()
+                git_client.status()
+                sys.exit(0)
+
+            elif c == "D":
+                git_client.diff()
+                sys.exit(0)
+
+            elif c == "F":
+                git_client.fetch()
+                git_client.status()
+                sys.exit(0)
+
+            elif c == "H":
+                git_client.show()
+                sys.exit(0)
+
+            elif c == "L":
+                git_client.log()
+                sys.exit(0)
+
+            elif c == "N":
+                try:
+                    input_branch = input("Enter new branch name to checkout: ").strip()
+                except KeyboardInterrupt:
+                    sys.exit(0)
+
+                if len(input_branch) == 0:
+                    print("error: branch name cannot be empty.")
+                    sys.exit(1)
+
+                if "/" not in input_branch:
+                    input_branch = f"stanislaw/{input_branch}"
+
+                git_client.checkout_new_branch(input_branch)
+                sys.exit(0)
+
+            elif c == "O":
+                copied_text = paste_from_clipboard()
+
+                if (
+                    git_client.check_if_git_branch(copied_text)
+                    or
+                    (
+                        "origin/" not in copied_text
+                        and
+                        git_client.check_if_git_branch(f"origin/{copied_text}")
+                    )
+                ):
+                    git_client.checkout_existing_branch(copied_text)
+                    sys.exit(0)
+                else:
+                    print("error: not a valid git branch.")
+                    sys.exit(1)
+
+            elif c == "P":
+                git_client.push()
+                git_client.status()
+                sys.exit(0)
+
+            elif c == "R":
+                git_client.rebase("origin/main")
+                git_client.status()
+                sys.exit(0)
+
+            elif c == "S":
+                git_client.status()
+                sys.exit(0)
+
+            elif c == "M":
+                git_client.switch_to_main()
+                git_client.status()
+                sys.exit(0)
+
+            elif c == "W":
+                git_client.commit(message="WIP")
+                git_client.status()
+                sys.exit(0)
+
+            if c == "!":
+                git_client.status()
+
+                response = input("Continue? [y/n]: ").strip().lower()
+                if not response in ["y", "yes"]:
+                    print("Please enter 'y' or 'n'.")
+                    sys.exit(1)
+
+                git_client.reset_hard()
+                git_client.clean_all()
+                git_client.status()
+                sys.exit(0)
+
+            elif c == '8':
+                git_client.reset_hard("HEAD^")
+                git_client.status()
+                sys.exit(0)
+
+            elif c == '9':
+                git_client.reset_soft_unstage("HEAD^")
+                git_client.status()
+                sys.exit(0)
+
+            elif c == '0':
+                git_client.reset_soft_unstage()
+                git_client.status()
+                sys.exit(0)
+
+            elif c == "+":
+                if git_client.is_top_merge_commit():
+                    print("error: cannot perform + on a merge commit.")
+                    sys.exit(1)
+                git_client.add_all()
+                git_client.status()
+                git_client.commit(amend=True, no_edit=True)
+                git_client.status()
+                sys.exit(0)
+
+            elif current_pattern == "bl1":
+                git_client.branch_latest()
+                sys.exit(0)
+
+            elif current_pattern == "bl2":
+                git_client.branch_latest(all=True)
+                sys.exit(0)
+
+            elif current_pattern == "cm1":
+                git_client.commit()
+                git_client.status()
+                sys.exit(0)
+
+            elif current_pattern == "cm2":
+                git_client.commit(amend=True)
+                git_client.status()
+                sys.exit(0)
+
+            elif current_pattern == "cm3":
+                git_client.commit(amend=True, no_edit=True)
+                git_client.status()
+                sys.exit(0)
+
+            elif current_pattern == "di1":
+                git_client.diff()
+                sys.exit(0)
+
+            elif current_pattern == "di2":
+                git_client.diff(target="HEAD")
+                sys.exit(0)
+
+            elif current_pattern == "l1":
+                git_client.log(commits=1)
+                sys.exit(0)
+
+            elif current_pattern == "l2":
+                git_client.log(commits=2)
+                sys.exit(0)
+
+if __name__ == "__main__":
+    main()
