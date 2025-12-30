@@ -459,11 +459,6 @@ def main():
                     print("error: not a valid git branch.")
                     sys.exit(1)
 
-            elif c == "P":
-                git_client.push()
-                git_client.status()
-                sys.exit(0)
-
             elif c == "S":
                 git_client.status()
                 sys.exit(0)
@@ -524,11 +519,6 @@ def main():
                 git_client.branch_latest(all=True)
                 sys.exit(0)
 
-            elif current_pattern == "cm1":
-                git_client.commit()
-                git_client.status()
-                sys.exit(0)
-
             elif current_pattern == "cm2":
                 git_client.commit(amend=True)
                 git_client.status()
@@ -545,14 +535,6 @@ def main():
 
             elif current_pattern == "di2":
                 git_client.diff(target="HEAD")
-                sys.exit(0)
-
-            elif current_pattern == "l1":
-                git_client.log(commits=1)
-                sys.exit(0)
-
-            elif current_pattern == "l2":
-                git_client.log(commits=2)
                 sys.exit(0)
 
 if __name__ == "__main__":
