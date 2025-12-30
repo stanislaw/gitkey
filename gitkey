@@ -464,11 +464,6 @@ def main():
                 git_client.status()
                 sys.exit(0)
 
-            elif c == "R":
-                git_client.rebase("origin/main")
-                git_client.status()
-                sys.exit(0)
-
             elif c == "S":
                 git_client.status()
                 sys.exit(0)
