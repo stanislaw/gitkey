@@ -127,7 +127,6 @@ class GitClient:
         if selected_branch:
             # Switch to the selected branch
             subprocess.run(["git", "switch", selected_branch], check=True)
-            print(f"Switched to branch: {selected_branch}")
         else:
             print("No branch selected.")
 
