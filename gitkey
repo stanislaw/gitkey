@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+import os
 import sys
 import subprocess
 import termios
@@ -436,7 +437,9 @@ def main():
                     sys.exit(1)
 
                 if "/" not in input_branch:
-                    input_branch = f"stanislaw/{input_branch}"
+                    username = os.environ.get("USER", None)
+                    if username is not None:
+                        input_branch = f"{username}/{input_branch}"
 
                 git_client.checkout_new_branch(input_branch)
                 sys.exit(0)
