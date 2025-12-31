@@ -79,6 +79,8 @@ export HISTIGNORE="gitkey"
 bind '"\C-g":"gitkey\n"'
 ```
 
+This will bind gitkey to the `Ctrl+G` key combination.
+
 ## Contributing
 
 If you like the idea, you can help make gitkey better by:
