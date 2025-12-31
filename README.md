@@ -57,20 +57,39 @@ greatly reduce mental effort.
 
 ## Installation
 
-1) Download the latest gitkey file:
+### System requirements
+
+`gitkey` has been tested and works on Linux (Ubuntu) and macOS.
+
+- On Linux, `Shift+O` uses `xclip` for pasting from a copy-and-paste buffer.
+- On Linux and macOS, the `Right` key uses `fzf` for selecting a Git branch from a GUI.
+
+Instructions for macOS:
+
+```bash
+brew install fzf
+```
+
+Instructions for Ubuntu:
+
+```bash
+sudo apt install -y xclip fzf
+```
+
+### Download the latest gitkey file
 
 ```
 wget https://raw.githubusercontent.com/stanislaw/gitkey/refs/heads/main/gitkey
 ```
 
-2) Place it to a directory which is known to your PATH, for example:
+Place it to a directory which is known to your `PATH`, for example:
 
-```
-cp gitkey ~/HOME/.local/bin/`.
+```bash
+cp gitkey ~/HOME/.local/bin/
 chmod +x ~/HOME/.local/bin/gitkey
 ```
 
-3) Register the key binding with your terminal.
+### Register the key binding with your terminal
 
 Bash:
 
