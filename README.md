@@ -3,7 +3,7 @@
 `gitkey` is a small Python script that lets you run Git commands using hotkeys.
 It makes Git faster and easier to use, so you do not have to type long commands
 all the time. With gitkey, many Git operations go from `O(N)` keystrokes to
-`O(2)` keystrokes: one to activate gitkey and one to run a Git command.
+`O(1)` keystrokes: one to activate gitkey and one to run a Git command.
 
 To use it, the script needs to be integrated into your favorite shell using key
 bindings.
@@ -91,19 +91,24 @@ chmod +x ~/HOME/.local/bin/gitkey
 
 ### Register the key binding with your terminal
 
-Bash:
+#### Bash
 
 ```bash
-export HISTIGNORE="gitkey"
+# Append gitkey to HISTIGNORE without removing existing entries
+export HISTIGNORE="${HISTIGNORE:+$HISTIGNORE:}gitkey"
+
+# Bind a hotkey.
 bind '"\C-g":"gitkey\n"'
 ```
 
-This will bind gitkey to the `Ctrl+G` key combination.
+This will bind gitkey to the `Ctrl+G` key combination. Setting `HISTIGNORE=`
+ensures that gitkey is not recorded in the Bash history, keeping your history
+free from repeated invocations.
 
 ## Contributing
 
 If you like the idea, you can help make gitkey better by:
 
-- Adding instructions for other shells (Zsh, Fish, etc.).
+- Adding instructions for other shells (Zsh, Fish, etc.) or platforms.
 - Suggesting or adding new hotkey combinations.
-- Improving customization or usability.
+- Improving customization or overall usability.
