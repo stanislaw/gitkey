@@ -438,6 +438,7 @@ def main():
                 if "/" not in input_branch:
                     username = os.environ.get("USER", None)
                     if username is not None:
+                        username = username.lower()
                         input_branch = f"{username}/{input_branch}"
 
                 git_client.checkout_new_branch(input_branch)
