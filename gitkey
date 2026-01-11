@@ -118,6 +118,7 @@ class GitClient:
                 "--sort=-committerdate",
                 "--format=%(refname:short)",
                 "refs/heads/",
+                "refs/remotes/",
             ],
             capture_output=True,
             text=True,
@@ -135,6 +136,9 @@ class GitClient:
         selected_branch = selected_branch.strip()
 
         if selected_branch:
+            if selected_branch.startswith("origin/"):
+                selected_branch = selected_branch.removeprefix("origin/")
+
             # Switch to the selected branch
             subprocess.run(["git", "switch", selected_branch], check=True)
         else:
