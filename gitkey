@@ -34,27 +34,27 @@ class RFXCustomFormatter:
     reset = "\x1b[0m"
 
     @staticmethod
-    def print(message: str, color: str):
+    def print(message: str, color: str) -> None:
         print(RFXCustomFormatter.format(message, color))
 
     @staticmethod
-    def format(message: str, color: str):
+    def format(message: str, color: str) -> str:
         return color + message + RFXCustomFormatter.reset
 
 
 class GitClient:
-    def add_all(self):
+    def add_all(self) -> None:
         command = "git add --all"
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(command.split(" "), capture_output=False, text=True)
 
-    def branch_latest(self, all=False):
+    def branch_latest(self, all: bool = False) -> None:
         args = [
             "git",
             "for-each-ref",
-	           "--sort=committerdate",
-            "--format=%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(color:red)%(objectname:short)%(color:reset) - %(contents:subject) - %(authorname) (%(color:green)%(committerdate:relative)%(color:reset))"
+            "--sort=committerdate",
+            "--format=%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(color:red)%(objectname:short)%(color:reset) - %(contents:subject) - %(authorname) (%(color:green)%(committerdate:relative)%(color:reset))",
         ]
         if not all:
             args.append("refs/heads/")
@@ -63,7 +63,12 @@ class GitClient:
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(args, capture_output=False, text=True)
 
-    def commit(self, amend=False, no_edit=False, message=None):
+    def commit(
+        self,
+        amend: bool = False,
+        no_edit: bool = False,
+        message: Optional[str] = None,
+    ) -> None:
         args = ["git", "commit"]
         if amend:
             args.append("--amend")
@@ -88,7 +93,7 @@ class GitClient:
         except subprocess.CalledProcessError:
             return False
 
-    def checkout_existing_branch(self, branch_name: str):
+    def checkout_existing_branch(self, branch_name: str) -> None:
         assert isinstance(branch_name, str)
         args = ["git", "checkout", branch_name]
         command = " ".join(args)
@@ -96,7 +101,7 @@ class GitClient:
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(args, capture_output=False, check=True, text=True)
 
-    def checkout_new_branch(self, branch_name: str):
+    def checkout_new_branch(self, branch_name: str) -> None:
         assert isinstance(branch_name, str)
         args = ["git", "switch", "-c", branch_name]
         command = " ".join(args)
@@ -104,14 +109,19 @@ class GitClient:
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(args, capture_output=False, check=True, text=True)
 
-    def checkout_branch_using_fzf(self):
+    def checkout_branch_using_fzf(self) -> None:
         # Get the list of branches, sorted by committer date
         branches = subprocess.run(
-            ["git", "for-each-ref", "--sort=-committerdate",
-            "--format=%(refname:short)", "refs/heads/"],
+            [
+                "git",
+                "for-each-ref",
+                "--sort=-committerdate",
+                "--format=%(refname:short)",
+                "refs/heads/",
+            ],
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         ).stdout.splitlines()
 
         # Open fzf with terminal interaction
@@ -119,7 +129,7 @@ class GitClient:
             ["fzf", "--ansi", "--prompt=Select branch> "],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            text=True
+            text=True,
         )
         selected_branch, _ = fzf.communicate(input="\n".join(branches))
         selected_branch = selected_branch.strip()
@@ -130,7 +140,7 @@ class GitClient:
         else:
             print("No branch selected.")
 
-    def diff(self, target=None):
+    def diff(self, target: Optional[str] = None) -> None:
         args = ["git", "diff"]
         if target is not None:
             args.append(target)
@@ -139,13 +149,13 @@ class GitClient:
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(args, capture_output=False, text=True)
 
-    def fetch(self):
+    def fetch(self) -> None:
         command = "git fetch"
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(command.split(" "), capture_output=False, text=True)
 
-    def log(self, commits: Optional[int] = None):
+    def log(self, commits: Optional[int] = None) -> None:
         args = ["git", "log"]
         if commits is not None:
             assert isinstance(commits, int), commits
@@ -155,7 +165,7 @@ class GitClient:
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(args, capture_output=False, text=True)
 
-    def push(self, force=False):
+    def push(self, force: bool = False) -> None:
         args = ["git", "push"]
         if force:
             args.append("--force")
@@ -164,70 +174,76 @@ class GitClient:
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(args, capture_output=False, text=True)
 
-    def pull(self):
+    def pull(self) -> None:
         args = ["git", "pull"]
         command_color = RFXCustomFormatter.inverted
         command = " ".join(args)
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(args, capture_output=False, text=True)
 
-    def pull_rebase(self):
+    def pull_rebase(self) -> None:
         args = ["git", "pull", "--rebase"]
         command_color = RFXCustomFormatter.inverted
         command = " ".join(args)
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(args, capture_output=False, text=True)
 
-    def rebase(self, branch: str):
+    def rebase(self, branch: str) -> None:
         assert isinstance(branch, str)
         command = f"git rebase {branch}"
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(command.split(" "), capture_output=False, text=True)
 
-    def rebase_abort(self):
-        command = f"git rebase --abort"
+    def rebase_abort(self) -> None:
+        command = "git rebase --abort"
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(command.split(" "), capture_output=False, text=True)
 
-    def rebase_continue(self):
-        command = f"git rebase --continue"
+    def rebase_continue(self) -> None:
+        command = "git rebase --continue"
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(command.split(" "), capture_output=False, text=True)
 
-    def rebase_interactive(self):
+    def rebase_interactive(self) -> None:
         command = "git rebase origin/main -i"
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(command.split(" "), capture_output=False, text=True)
 
-    def show(self):
+    def show(self) -> None:
         command = "git show"
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(command.split(" "), capture_output=False, text=True)
 
-    def status(self):
+    def status(self) -> None:
         status_command = "git status"
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(status_command, command_color)
-        subprocess.run(status_command.split(" "), capture_output=False, text=True)
+        subprocess.run(
+            status_command.split(" "), capture_output=False, text=True
+        )
 
-    def switch_to_main(self):
+    def switch_to_main(self) -> None:
         switch_command = "git switch main"
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(switch_command, command_color)
-        subprocess.run(switch_command.split(" "), capture_output=False, text=True)
+        subprocess.run(
+            switch_command.split(" "), capture_output=False, text=True
+        )
 
-    def switch_to_previous_branch(self):
+    def switch_to_previous_branch(self) -> None:
         switch_command = "git switch -"
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(switch_command, command_color)
-        subprocess.run(switch_command.split(" "), capture_output=False, text=True)
+        subprocess.run(
+            switch_command.split(" "), capture_output=False, text=True
+        )
 
-    def reset_soft_unstage(self, target=None):
+    def reset_soft_unstage(self, target: Optional[str] = None) -> None:
         args = ["git", "reset"]
         if target is not None:
             args.append(target)
@@ -236,7 +252,7 @@ class GitClient:
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(args, capture_output=False, text=True)
 
-    def reset_hard(self, revision=""):
+    def reset_hard(self, revision: str = "") -> None:
         # First, preserve the diff.
         print("")
         self._apply_patch()
@@ -246,24 +262,30 @@ class GitClient:
         reset_command = f"git reset --hard {revision_argument}".rstrip()
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(reset_command, command_color)
-        subprocess.run(reset_command.split(" "), capture_output=False, text=True)
+        subprocess.run(
+            reset_command.split(" "), capture_output=False, text=True
+        )
 
-    def clean_all(self):
+    def clean_all(self) -> None:
         clean_command = "git clean -d --force"
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(clean_command, command_color)
-        subprocess.run(clean_command.split(" "), capture_output=False, text=True)
+        subprocess.run(
+            clean_command.split(" "), capture_output=False, text=True
+        )
 
-    def _apply_patch(self):
-        result = subprocess.run("git diff HEAD".split(" "), capture_output=True, text=True)
+    def _apply_patch(self) -> None:
+        result = subprocess.run(
+            "git diff HEAD".split(" "), capture_output=True, text=True
+        )
         assert result.returncode == 0
         if len(result.stdout) == 0:
             print(
-                f"**********************************************************************"
+                "**********************************************************************"
             )
-            print(f"The diff is empty. Not creating a patch.")
+            print("The diff is empty. Not creating a patch.")
             print(
-                f"**********************************************************************"
+                "**********************************************************************"
             )
             return
 
@@ -272,22 +294,32 @@ class GitClient:
         patches_dir.mkdir(parents=True, exist_ok=True)
 
         now = datetime.now()
-        formatted_date = now.strftime('%Y%m%d_%H%M%S_%f')
+        formatted_date = now.strftime("%Y%m%d_%H%M%S_%f")
         path_to_out_patch = patches_dir.joinpath(f"{formatted_date}.patch")
 
         with open(path_to_out_patch, "w") as out_patch:
             out_patch.write(result.stdout)
-        print(f"**********************************************************************")
+        print(
+            "**********************************************************************"
+        )
         print(f"Created a patch: {path_to_out_patch}")
-        print(f"**********************************************************************")
+        print(
+            "**********************************************************************"
+        )
 
     def is_top_merge_commit(self) -> bool:
-        is_merge = len(subprocess.check_output(
-            ["git", "show", "-s", "--pretty=%P"]
-        ).split()) > 1
+        is_merge = (
+            len(
+                subprocess.check_output(
+                    ["git", "show", "-s", "--pretty=%P"]
+                ).split()
+            )
+            > 1
+        )
         return is_merge
 
-def get_key():
+
+def get_key() -> str:
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     try:
@@ -298,7 +330,7 @@ def get_key():
     return ch
 
 
-def main():
+def main() -> None:
     git_client = GitClient()
 
     debug = False
@@ -427,7 +459,9 @@ def main():
 
             elif c == "N":
                 try:
-                    input_branch = input("Enter new branch name to checkout: ").strip()
+                    input_branch = input(
+                        "Enter new branch name to checkout: "
+                    ).strip()
                 except KeyboardInterrupt:
                     sys.exit(0)
 
@@ -447,14 +481,9 @@ def main():
             elif c == "O":
                 copied_text = paste_from_clipboard()
 
-                if (
-                    git_client.check_if_git_branch(copied_text)
-                    or
-                    (
-                        "origin/" not in copied_text
-                        and
-                        git_client.check_if_git_branch(f"origin/{copied_text}")
-                    )
+                if git_client.check_if_git_branch(copied_text) or (
+                    "origin/" not in copied_text
+                    and git_client.check_if_git_branch(f"origin/{copied_text}")
                 ):
                     git_client.checkout_existing_branch(copied_text)
                     sys.exit(0)
@@ -481,7 +510,7 @@ def main():
                 git_client.status()
 
                 response = input("Continue? [y/n]: ").strip().lower()
-                if not response in ["y", "yes"]:
+                if response not in ["y", "yes"]:
                     print("Please enter 'y' or 'n'.")
                     sys.exit(1)
 
@@ -490,17 +519,17 @@ def main():
                 git_client.status()
                 sys.exit(0)
 
-            elif c == '8':
+            elif c == "8":
                 git_client.reset_hard("HEAD^")
                 git_client.status()
                 sys.exit(0)
 
-            elif c == '9':
+            elif c == "9":
                 git_client.reset_soft_unstage("HEAD^")
                 git_client.status()
                 sys.exit(0)
 
-            elif c == '0':
+            elif c == "0":
                 git_client.reset_soft_unstage()
                 git_client.status()
                 sys.exit(0)
@@ -540,6 +569,7 @@ def main():
             elif current_pattern == "di2":
                 git_client.diff(target="HEAD")
                 sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
