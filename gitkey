@@ -468,6 +468,7 @@ def main():
 
             elif c == "M":
                 git_client.switch_to_main()
+                git_client.pull()
                 git_client.status()
                 sys.exit(0)
 
