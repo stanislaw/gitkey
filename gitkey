@@ -56,8 +56,11 @@ class GitClient:
             "--sort=committerdate",
             "--format=%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(color:red)%(objectname:short)%(color:reset) - %(contents:subject) - %(authorname) (%(color:green)%(committerdate:relative)%(color:reset))",
         ]
-        if not all:
-            args.append("refs/heads/")
+
+        args.append("refs/heads/")
+        if all:
+            args.append("refs/remotes/")
+
         command = " ".join(args)
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(command, command_color)
@@ -436,7 +439,7 @@ def main() -> None:
                 sys.exit(0)
 
             elif c == "B":
-                git_client.branch_latest()
+                git_client.branch_latest(all=True)
                 sys.exit(0)
 
             elif c == "C":
