@@ -56,8 +56,11 @@ class GitClient:
             "--sort=committerdate",
             "--format=%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(color:red)%(objectname:short)%(color:reset) - %(contents:subject) - %(authorname) (%(color:green)%(committerdate:relative)%(color:reset))",
         ]
-        if not all:
-            args.append("refs/heads/")
+
+        args.append("refs/heads/")
+        if all:
+            args.append("refs/remotes/")
+
         command = " ".join(args)
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(command, command_color)
@@ -118,6 +121,7 @@ class GitClient:
                 "--sort=-committerdate",
                 "--format=%(refname:short)",
                 "refs/heads/",
+                "refs/remotes/",
             ],
             capture_output=True,
             text=True,
@@ -135,6 +139,9 @@ class GitClient:
         selected_branch = selected_branch.strip()
 
         if selected_branch:
+            if selected_branch.startswith("origin/"):
+                selected_branch = selected_branch.removeprefix("origin/")
+
             # Switch to the selected branch
             subprocess.run(["git", "switch", selected_branch], check=True)
         else:
@@ -432,7 +439,7 @@ def main() -> None:
                 sys.exit(0)
 
             elif c == "B":
-                git_client.branch_latest()
+                git_client.branch_latest(all=True)
                 sys.exit(0)
 
             elif c == "C":
