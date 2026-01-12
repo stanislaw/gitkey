@@ -85,8 +85,8 @@ wget https://raw.githubusercontent.com/stanislaw/gitkey/refs/heads/main/gitkey
 Place it to a directory which is known to your `PATH`, for example:
 
 ```bash
-cp gitkey ~/HOME/.local/bin/
-chmod +x ~/HOME/.local/bin/gitkey
+cp gitkey ~/.local/bin/
+chmod +x ~/.local/bin/gitkey
 ```
 
 ### Register the key binding with your terminal
