@@ -121,3 +121,8 @@ def lint(context: Context) -> None:
 @task(aliases=["c"])
 def check(context: Context) -> None:
     lint(context)
+
+
+@task(aliases=["ti"])
+def test_integration(context: Context) -> None:
+    run_invoke(context, "lit -v tests/integration")
