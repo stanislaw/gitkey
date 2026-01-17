@@ -1,0 +1,20 @@
+# RUN: rm -rf %t
+# RUN: mkdir -p %t/home %t/repo
+# RUN: cd %t/repo && git init -b main
+# RUN: cd %t/repo && git config user.name gitkey-test
+# RUN: cd %t/repo && git config user.email gitkey-test@example.invalid
+# RUN: cd %t/repo && echo "fixture" > README.txt
+# RUN: cd %t/repo && git add README.txt
+# RUN: cd %t/repo && git commit -m "Initial commit"
+# RUN: cp %s %t/home/config.py
+# RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'S' | env GITKEY_CONFIG=%t/home/config.py $GITKEY_BIN | filecheck %s"
+
+# CHECK: git log
+
+def my_status(gc):
+    gc.log()
+
+
+BINDINGS = {
+    "S": my_status,
+}

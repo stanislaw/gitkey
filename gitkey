@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+import importlib.util
 import os
 import sys
 import subprocess
@@ -8,7 +9,7 @@ import tty
 from datetime import datetime
 from pathlib import Path
 from sys import platform
-from typing import Optional
+from typing import Callable, Optional
 
 
 VERSION = "0.1.0"
@@ -340,11 +341,158 @@ def get_key() -> str:
     return ch
 
 
+def load_user_bindings(
+    default_bindings: dict[str, Callable[["GitClient"], None]],
+) -> dict[str, Callable[["GitClient"], None]]:
+    config_path = os.environ.get("GITKEY_CONFIG")
+    search_paths: list[str] = []
+    if config_path:
+        search_paths.append(config_path)
+    else:
+        search_paths.append(os.path.join(Path.home(), ".gitkey", "config.py"))
+
+    for path in search_paths:
+        if not os.path.isfile(path):
+            continue
+
+        spec = importlib.util.spec_from_file_location(
+            "gitkey_user_config", path
+        )
+        if spec is None or spec.loader is None:
+            print(f"error: failed to load config from {path}", file=sys.stderr)
+            return default_bindings
+
+        module = importlib.util.module_from_spec(spec)
+        try:
+            spec.loader.exec_module(module)
+        except Exception as exc:
+            print(
+                f"error: failed to execute config {path}: {exc}",
+                file=sys.stderr,
+            )
+            return default_bindings
+
+        user_bindings = getattr(module, "BINDINGS", None)
+        if user_bindings is None:
+            return default_bindings
+        if not isinstance(user_bindings, dict):
+            print(
+                f"error: BINDINGS in {path} must be a dict",
+                file=sys.stderr,
+            )
+            return default_bindings
+
+        merged = default_bindings.copy()
+        merged.update(user_bindings)
+        return merged
+
+    return default_bindings
+
+
 def main() -> None:
     git_client = GitClient()
 
     debug = False
     current_pattern = ""
+
+    def new_branch() -> None:
+        try:
+            input_branch = input("Enter new branch name to checkout: ").strip()
+        except KeyboardInterrupt:
+            sys.exit(0)
+
+        if len(input_branch) == 0:
+            print("error: branch name cannot be empty.")
+            sys.exit(1)
+
+        if "/" not in input_branch:
+            username = os.environ.get("USER", None)
+            if username is not None:
+                username = username.lower()
+                input_branch = f"{username}/{input_branch}"
+
+        git_client.checkout_new_branch(input_branch)
+
+    def checkout_from_clipboard() -> None:
+        copied_text = paste_from_clipboard()
+        if git_client.check_if_git_branch(copied_text) or (
+            "origin/" not in copied_text
+            and git_client.check_if_git_branch(f"origin/{copied_text}")
+        ):
+            git_client.checkout_existing_branch(copied_text)
+            return
+
+        print("error: not a valid git branch.")
+        sys.exit(1)
+
+    def hard_reset_flow() -> None:
+        git_client.status()
+        response = input("Continue? [y/n]: ").strip().lower()
+        if response not in ["y", "yes"]:
+            print("Please enter 'y' or 'n'.")
+            sys.exit(1)
+
+        git_client.reset_hard()
+        git_client.clean_all()
+        git_client.status()
+
+    def amend_if_possible() -> None:
+        if git_client.is_top_merge_commit():
+            print("error: cannot perform + on a merge commit.")
+            sys.exit(1)
+        git_client.add_all()
+        git_client.status()
+        git_client.commit(amend=True, no_edit=True)
+        git_client.status()
+
+    default_bindings: dict[str, Callable[[GitClient], None]] = {
+        "\t": lambda gc: (
+            gc.fetch(),
+            gc.rebase("origin/main"),
+            gc.status(),
+        ),
+        "27[A": lambda gc: (gc.push(), gc.status()),
+        "27[1;2A": lambda gc: (gc.push(force=True), gc.status()),
+        "27[B": lambda gc: (gc.pull(), gc.status()),
+        "27[1;2B": lambda gc: (gc.pull_rebase(), gc.status()),
+        "27[D": lambda gc: (gc.switch_to_previous_branch(), gc.status()),
+        "27[1;2D": lambda gc: (gc.rebase_abort(), gc.status()),
+        "27[C": lambda gc: (gc.checkout_branch_using_fzf(), gc.status()),
+        "27[1;2C": lambda gc: (gc.rebase_continue(), gc.status()),
+        "27[Z": lambda gc: (
+            gc.fetch(),
+            gc.rebase_interactive(),
+            gc.status(),
+        ),
+        "A": lambda gc: (gc.add_all(), gc.status()),
+        "B": lambda gc: gc.branch_latest(all=True),
+        "C": lambda gc: (gc.commit(), gc.status()),
+        "D": lambda gc: gc.diff(),
+        "F": lambda gc: (gc.fetch(), gc.status()),
+        "H": lambda gc: gc.show(),
+        "L": lambda gc: gc.log(),
+        "N": lambda _gc: new_branch(),
+        "O": lambda _gc: checkout_from_clipboard(),
+        "S": lambda gc: gc.status(),
+        "M": lambda gc: (gc.switch_to_main(), gc.pull(), gc.status()),
+        "W": lambda gc: (gc.commit(message="WIP"), gc.status()),
+        "!": lambda _gc: hard_reset_flow(),
+        "8": lambda gc: (gc.reset_hard("HEAD^"), gc.status()),
+        "9": lambda gc: (gc.reset_soft_unstage("HEAD^"), gc.status()),
+        "0": lambda gc: (gc.reset_soft_unstage(), gc.status()),
+        "+": lambda _gc: amend_if_possible(),
+        "bl1": lambda gc: gc.branch_latest(),
+        "bl2": lambda gc: gc.branch_latest(all=True),
+        "cm2": lambda gc: (gc.commit(amend=True), gc.status()),
+        "cm3": lambda gc: (gc.commit(amend=True, no_edit=True), gc.status()),
+        "di1": lambda gc: gc.diff(),
+        "di2": lambda gc: gc.diff(target="HEAD"),
+    }
+
+    bindings = load_user_bindings(default_bindings)
+
+    def has_prefix(pattern: str) -> bool:
+        return any(key.startswith(pattern) for key in bindings.keys())
 
     escape = False
 
@@ -352,21 +500,9 @@ def main() -> None:
         c = get_key()
         if c == "":
             sys.exit(0)
-        current_pattern += c
-
-        if debug:
-            print(c, ord(c), end=None)
-            print(f"PATT: '{current_pattern}'")
 
         if ord(c) == 3:
             print("")
-            sys.exit(0)
-
-        # TAB
-        if ord(c) == 9:
-            git_client.fetch()
-            git_client.rebase("origin/main")
-            git_client.status()
             sys.exit(0)
 
         # Escape sequence
@@ -381,206 +517,22 @@ def main() -> None:
             print(f"Correcting pattern: {current_pattern}")
             continue
 
-        if escape:
-            # Up
-            if current_pattern == "27[A":
-                git_client.push()
-                git_client.status()
-                sys.exit(0)
+        current_pattern += c
 
-            # Shift + Up
-            elif current_pattern == "27[1;2A":
-                git_client.push(force=True)
-                git_client.status()
-                sys.exit(0)
+        if debug:
+            print(c, ord(c), end=None)
+            print(f"PATT: '{current_pattern}'")
 
-            # Down
-            elif current_pattern == "27[B":
-                git_client.pull()
-                git_client.status()
-                sys.exit(0)
+        binding = bindings.get(current_pattern)
+        if binding is not None:
+            binding(git_client)
+            sys.exit(0)
 
-            # Shift + Down
-            elif current_pattern == "27[1;2B":
-                git_client.pull_rebase()
-                git_client.status()
-                sys.exit(0)
-
-            # Left
-            elif current_pattern == "27[D":
-                git_client.switch_to_previous_branch()
-                git_client.status()
-                sys.exit(0)
-
-            # Shift + Left
-            elif current_pattern == "27[1;2D":
-                git_client.rebase_abort()
-                git_client.status()
-                sys.exit(0)
-
-            # Right
-            elif current_pattern == "27[C":
-                git_client.checkout_branch_using_fzf()
-                git_client.status()
-                sys.exit(0)
-
-            # Shift + Right
-            elif current_pattern == "27[1;2C":
-                git_client.rebase_continue()
-                git_client.status()
-                sys.exit(0)
-
-            # Shift+TAB
-            elif current_pattern == "27[Z":
-                git_client.fetch()
-                git_client.rebase_interactive()
-                git_client.status()
-                sys.exit(0)
-
-        else:
-            if c == "A":
-                git_client.add_all()
-                git_client.status()
-                sys.exit(0)
-
-            elif c == "B":
-                git_client.branch_latest(all=True)
-                sys.exit(0)
-
-            elif c == "C":
-                git_client.commit()
-                git_client.status()
-                sys.exit(0)
-
-            elif c == "D":
-                git_client.diff()
-                sys.exit(0)
-
-            elif c == "F":
-                git_client.fetch()
-                git_client.status()
-                sys.exit(0)
-
-            elif c == "H":
-                git_client.show()
-                sys.exit(0)
-
-            elif c == "L":
-                git_client.log()
-                sys.exit(0)
-
-            elif c == "N":
-                try:
-                    input_branch = input(
-                        "Enter new branch name to checkout: "
-                    ).strip()
-                except KeyboardInterrupt:
-                    sys.exit(0)
-
-                if len(input_branch) == 0:
-                    print("error: branch name cannot be empty.")
-                    sys.exit(1)
-
-                if "/" not in input_branch:
-                    username = os.environ.get("USER", None)
-                    if username is not None:
-                        username = username.lower()
-                        input_branch = f"{username}/{input_branch}"
-
-                git_client.checkout_new_branch(input_branch)
-                sys.exit(0)
-
-            elif c == "O":
-                copied_text = paste_from_clipboard()
-
-                if git_client.check_if_git_branch(copied_text) or (
-                    "origin/" not in copied_text
-                    and git_client.check_if_git_branch(f"origin/{copied_text}")
-                ):
-                    git_client.checkout_existing_branch(copied_text)
-                    sys.exit(0)
-                else:
-                    print("error: not a valid git branch.")
-                    sys.exit(1)
-
-            elif c == "S":
-                git_client.status()
-                sys.exit(0)
-
-            elif c == "M":
-                git_client.switch_to_main()
-                git_client.pull()
-                git_client.status()
-                sys.exit(0)
-
-            elif c == "W":
-                git_client.commit(message="WIP")
-                git_client.status()
-                sys.exit(0)
-
-            if c == "!":
-                git_client.status()
-
-                response = input("Continue? [y/n]: ").strip().lower()
-                if response not in ["y", "yes"]:
-                    print("Please enter 'y' or 'n'.")
-                    sys.exit(1)
-
-                git_client.reset_hard()
-                git_client.clean_all()
-                git_client.status()
-                sys.exit(0)
-
-            elif c == "8":
-                git_client.reset_hard("HEAD^")
-                git_client.status()
-                sys.exit(0)
-
-            elif c == "9":
-                git_client.reset_soft_unstage("HEAD^")
-                git_client.status()
-                sys.exit(0)
-
-            elif c == "0":
-                git_client.reset_soft_unstage()
-                git_client.status()
-                sys.exit(0)
-
-            elif c == "+":
-                if git_client.is_top_merge_commit():
-                    print("error: cannot perform + on a merge commit.")
-                    sys.exit(1)
-                git_client.add_all()
-                git_client.status()
-                git_client.commit(amend=True, no_edit=True)
-                git_client.status()
-                sys.exit(0)
-
-            elif current_pattern == "bl1":
-                git_client.branch_latest()
-                sys.exit(0)
-
-            elif current_pattern == "bl2":
-                git_client.branch_latest(all=True)
-                sys.exit(0)
-
-            elif current_pattern == "cm2":
-                git_client.commit(amend=True)
-                git_client.status()
-                sys.exit(0)
-
-            elif current_pattern == "cm3":
-                git_client.commit(amend=True, no_edit=True)
-                git_client.status()
-                sys.exit(0)
-
-            elif current_pattern == "di1":
-                git_client.diff()
-                sys.exit(0)
-
-            elif current_pattern == "di2":
-                git_client.diff(target="HEAD")
-                sys.exit(0)
+        if escape and not has_prefix(current_pattern):
+            escape = False
+            current_pattern = ""
+        elif not escape and not has_prefix(current_pattern):
+            current_pattern = ""
 
 
 if __name__ == "__main__":
