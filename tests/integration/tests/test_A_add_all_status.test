@@ -7,7 +7,7 @@ RUN: cd %t/repo && echo "fixture" > README.txt
 RUN: cd %t/repo && git add README.txt
 RUN: cd %t/repo && git commit -m "Initial commit"
 RUN: cd %t/repo && echo "change" >> README.txt
-RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'A' | $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'A' | env %gitkey_env $GITKEY_BIN | filecheck %s"
 
 CHECK: git add --all
 CHECK: git status

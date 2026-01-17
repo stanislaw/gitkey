@@ -16,7 +16,7 @@ RUN: cd %t/repo && git add README.txt
 RUN: cd %t/repo && git commit -m "Main commit"
 RUN: cd %t/repo && git checkout feature
 RUN: cd %t/repo && git rebase main || true
-RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[1;2D' | $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[1;2D' | env %gitkey_env $GITKEY_BIN | filecheck %s"
 
 CHECK: git rebase --abort
 CHECK: git status

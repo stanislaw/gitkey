@@ -9,7 +9,7 @@ RUN: cd %t/repo && git commit -m "First commit"
 RUN: cd %t/repo && echo "second" >> README.txt
 RUN: cd %t/repo && git add README.txt
 RUN: cd %t/repo && git commit -m "Second commit"
-RUN: %expect_exit 0 bash -c "cd %t/repo && printf '9' | $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '9' | env %gitkey_env $GITKEY_BIN | filecheck %s"
 
 CHECK: git reset HEAD^
 CHECK: git status

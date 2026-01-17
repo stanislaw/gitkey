@@ -10,7 +10,7 @@ RUN: cd %t/repo && echo "change" >> README.txt
 RUN: cd %t/repo && git add README.txt
 RUN: printf '#!/bin/sh\necho \"Amended\" > \"$1\"\n' > %t/bin/editor
 RUN: chmod +x %t/bin/editor
-RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'cm2' | env GIT_EDITOR=%t/bin/editor PATH=%t/bin:$PATH $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'cm2' | env %gitkey_env GIT_EDITOR=%t/bin/editor PATH=%t/bin:$PATH $GITKEY_BIN | filecheck %s"
 
 CHECK: git commit --amend
 CHECK: git status

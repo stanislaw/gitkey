@@ -8,7 +8,7 @@ RUN: cd %t/repo && git add README.txt
 RUN: cd %t/repo && git commit -m "Initial commit"
 RUN: cd %t/repo && echo "change" >> README.txt
 RUN: cd %t/repo && git add README.txt
-RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'W' | $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'W' | env %gitkey_env $GITKEY_BIN | filecheck %s"
 
 CHECK: git commit -m WIP
 CHECK: git status

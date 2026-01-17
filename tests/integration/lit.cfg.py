@@ -15,12 +15,15 @@ config.test_source_root = THIS_DIR
 config.test_exec_root = os.path.join(REPO_ROOT, "build", "lit")
 
 gitkey_path = os.path.join(REPO_ROOT, "gitkey")
-config.environment["GITKEY_BIN"] = (
-    "env HOME=%t/home "
-    "GIT_CONFIG_GLOBAL=/dev/null "
-    "GIT_CONFIG_SYSTEM=/dev/null "
-    "GITKEY_TEST_INPUT=1 "
-    f"{gitkey_path}"
+config.environment["GITKEY_BIN"] = gitkey_path
+config.substitutions.append(
+    (
+        "%gitkey_env",
+        "HOME=%t/home "
+        "GIT_CONFIG_GLOBAL=/dev/null "
+        "GIT_CONFIG_SYSTEM=/dev/null "
+        "GITKEY_TEST_INPUT=1",
+    )
 )
 
 expect_exit = os.path.join(TOOLS_DIR, "expect_exit.py")

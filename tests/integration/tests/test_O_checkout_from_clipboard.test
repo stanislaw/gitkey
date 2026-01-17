@@ -10,7 +10,7 @@ RUN: cd %t/repo && git checkout -b feature
 RUN: cd %t/repo && git checkout main
 RUN: printf '#!/bin/sh\necho feature\n' > %t/bin/xclip
 RUN: chmod +x %t/bin/xclip
-RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'O' | env PATH=%t/bin:$PATH $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'O' | env %gitkey_env PATH=%t/bin:$PATH $GITKEY_BIN | filecheck %s"
 
 CHECK: git rev-parse --verify feature
 CHECK: git checkout feature

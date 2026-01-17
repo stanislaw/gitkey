@@ -8,7 +8,7 @@ RUN: cd %t/repo && git add README.txt
 RUN: cd %t/repo && git commit -m "Initial commit"
 RUN: cd %t/repo && git checkout -b feature
 RUN: cd %t/repo && git checkout main
-RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[D' | $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[D' | env %gitkey_env $GITKEY_BIN | filecheck %s"
 
 CHECK: git switch -
 CHECK: git status
