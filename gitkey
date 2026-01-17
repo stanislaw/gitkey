@@ -44,8 +44,15 @@ class RFXCustomFormatter:
 
 
 class GitClient:
-    def add_all(self) -> None:
-        command = "git add --all"
+    def add(self, all: bool = False, update: bool = False) -> None:
+        command = "git add"
+        if all:
+            command += " --all"
+        elif update:
+            command += " --update"
+        else:
+            command += " ."
+
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(command.split(" "), capture_output=False, text=True)
@@ -440,7 +447,7 @@ def main() -> None:
         if git_client.is_top_merge_commit():
             print("error: cannot perform + on a merge commit.")
             sys.exit(1)
-        git_client.add_all()
+        git_client.add(all=True)
         git_client.status()
         git_client.commit(amend=True, no_edit=True)
         git_client.status()
@@ -487,7 +494,7 @@ def main() -> None:
             lambda g: g.status(),
         ),
         "A": lambda gc: run_chain(
-            gc, lambda g: g.add_all(), lambda g: g.status()
+            gc, lambda g: g.add(all=True), lambda g: g.status()
         ),
         "B": lambda gc: gc.branch_latest(all=True),
         "C": lambda gc: run_chain(
