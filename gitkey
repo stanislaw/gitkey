@@ -327,6 +327,9 @@ class GitClient:
 
 
 def get_key() -> str:
+    if os.environ.get("GITKEY_TEST_INPUT") == "1" or not sys.stdin.isatty():
+        return sys.stdin.read(1)
+
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     try:
@@ -347,6 +350,8 @@ def main() -> None:
 
     while True:
         c = get_key()
+        if c == "":
+            sys.exit(0)
         current_pattern += c
 
         if debug:

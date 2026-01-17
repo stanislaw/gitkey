@@ -1,0 +1,16 @@
+RUN: rm -rf %t
+RUN: mkdir -p %t/home %t/repo %t/remote.git
+RUN: cd %t/repo
+RUN: git init --bare %t/remote.git
+RUN: git init -b main
+RUN: git config user.name gitkey-test
+RUN: git config user.email gitkey-test@example.invalid
+RUN: git remote add origin %t/remote.git
+RUN: echo "fixture" > README.txt
+RUN: git add README.txt
+RUN: git commit -m "Initial commit"
+RUN: git push -u origin main
+RUN: %expect_exit 0 bash -c "printf '\\033[A' | $GITKEY_BIN | filecheck %s"
+
+CHECK: git push
+CHECK: git status

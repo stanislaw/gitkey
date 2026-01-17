@@ -1,2 +1,8 @@
+invoke
+
 mypy
 ruff
+
+# Integration tests.
+lit
+filecheck<1.0
