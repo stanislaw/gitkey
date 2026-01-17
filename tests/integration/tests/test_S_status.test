@@ -4,6 +4,6 @@ RUN: cd %t/repo
 RUN: git init -b main
 RUN: git config user.name gitkey-test
 RUN: git config user.email gitkey-test@example.invalid
-RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'S' | $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'S' | env %gitkey_env $GITKEY_BIN | filecheck %s"
 
 CHECK: git status

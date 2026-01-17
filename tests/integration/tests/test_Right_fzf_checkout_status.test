@@ -12,6 +12,6 @@ RUN: cd %t/repo && git add README.txt
 RUN: cd %t/repo && git commit -m "Feature commit"
 RUN: printf '#!/bin/sh\nread line\necho \"$line\"\n' > %t/bin/fzf
 RUN: chmod +x %t/bin/fzf
-RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[C' | env PATH=%t/bin:$PATH $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[C' | env %gitkey_env PATH=%t/bin:$PATH $GITKEY_BIN | filecheck %s"
 
 CHECK: git status

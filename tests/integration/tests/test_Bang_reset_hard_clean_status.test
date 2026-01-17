@@ -8,8 +8,9 @@ RUN: cd %t/repo && git add README.txt
 RUN: cd %t/repo && git commit -m "Initial commit"
 RUN: cd %t/repo && echo "change" >> README.txt
 RUN: cd %t/repo && touch untracked.txt
-RUN: %expect_exit 0 bash -c "cd %t/repo && printf '!y\n' | $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '!y\n' | env %gitkey_env $GITKEY_BIN | filecheck %s"
 
+CHECK: Created a patch: {{.*}}/home/patches/{{.*}}.patch
 CHECK: git reset --hard
 CHECK: git clean -d --force
 CHECK: git status
