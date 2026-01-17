@@ -7,14 +7,14 @@
 # RUN: cd %t/repo && git add README.txt
 # RUN: cd %t/repo && git commit -m "Initial commit"
 # RUN: cp %s %t/home/config.py
-# RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'S' | env GITKEY_CONFIG=%t/home/config.py $GITKEY_BIN | filecheck %s"
+# RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'A' | env GITKEY_CONFIG=%t/home/config.py $GITKEY_BIN | filecheck %s"
 
-# CHECK: git log
+# CHECK: git add --update
 
-def my_status(gc):
-    gc.log()
+def my_add(gc):
+    gc.add(all=False, update=True)
 
 
 BINDINGS = {
-    "S": my_status,
+    "A": my_add,
 }
