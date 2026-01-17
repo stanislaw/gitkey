@@ -82,11 +82,14 @@ sudo apt install -y xclip fzf
 wget https://raw.githubusercontent.com/stanislaw/gitkey/refs/heads/main/gitkey
 ```
 
-Place it to a directory which is known to your `PATH`, for example:
+Place it to a common directory which is known to your `PATH`, for example:
+
 
 ```bash
-cp gitkey ~/.local/bin/
-chmod +x ~/.local/bin/gitkey
+mkdir ~/.config/gitkey
+export PATH="$HOME/.config/gitkey:$PATH"
+cp gitkey ~/.config/gitkey/
+chmod +x ~/.config/gitkey/gitkey
 ```
 
 ### Register the key binding with your terminal
