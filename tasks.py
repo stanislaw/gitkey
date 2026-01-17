@@ -118,11 +118,13 @@ def lint(context: Context) -> None:
     lint_mypy(context)
 
 
+@task(aliases=["ti"])
+def test_integration(context: Context, focus: Optional[str] = None) -> None:
+    filter_arg = f"--filter {focus}" if focus else ""
+    run_invoke(context, f"lit -v tests/integration {filter_arg}")
+
+
 @task(aliases=["c"])
 def check(context: Context) -> None:
     lint(context)
-
-
-@task(aliases=["ti"])
-def test_integration(context: Context) -> None:
-    run_invoke(context, "lit -v tests/integration")
+    test_integration(context)

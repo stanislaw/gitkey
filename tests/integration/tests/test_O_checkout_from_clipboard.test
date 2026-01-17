@@ -1,0 +1,16 @@
+RUN: rm -rf %t
+RUN: mkdir -p %t/home %t/repo %t/bin
+RUN: cd %t/repo && git init -b main
+RUN: cd %t/repo && git config user.name gitkey-test
+RUN: cd %t/repo && git config user.email gitkey-test@example.invalid
+RUN: cd %t/repo && echo "fixture" > README.txt
+RUN: cd %t/repo && git add README.txt
+RUN: cd %t/repo && git commit -m "Initial commit"
+RUN: cd %t/repo && git checkout -b feature
+RUN: cd %t/repo && git checkout main
+RUN: printf '#!/bin/sh\necho feature\n' > %t/bin/xclip
+RUN: chmod +x %t/bin/xclip
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'O' | env PATH=%t/bin:$PATH $GITKEY_BIN | filecheck %s"
+
+CHECK: git rev-parse --verify feature
+CHECK: git checkout feature

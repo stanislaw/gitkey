@@ -1,0 +1,17 @@
+RUN: rm -rf %t
+RUN: mkdir -p %t/home %t/repo %t/bin
+RUN: cd %t/repo && git init -b main
+RUN: cd %t/repo && git config user.name gitkey-test
+RUN: cd %t/repo && git config user.email gitkey-test@example.invalid
+RUN: cd %t/repo && echo "base" > README.txt
+RUN: cd %t/repo && git add README.txt
+RUN: cd %t/repo && git commit -m "Base commit"
+RUN: cd %t/repo && git checkout -b feature
+RUN: cd %t/repo && echo "feature" >> README.txt
+RUN: cd %t/repo && git add README.txt
+RUN: cd %t/repo && git commit -m "Feature commit"
+RUN: printf '#!/bin/sh\nread line\necho \"$line\"\n' > %t/bin/fzf
+RUN: chmod +x %t/bin/fzf
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[C' | env PATH=%t/bin:$PATH $GITKEY_BIN | filecheck %s"
+
+CHECK: git status

@@ -187,7 +187,7 @@ class GitClient:
         command_color = RFXCustomFormatter.inverted
         command = " ".join(args)
         RFXCustomFormatter.print(command, command_color)
-        subprocess.run(args, capture_output=False, text=True)
+        subprocess.run(args, capture_output=False, text=True, check=True)
 
     def pull_rebase(self) -> None:
         args = ["git", "pull", "--rebase"]
@@ -445,46 +445,93 @@ def main() -> None:
         git_client.commit(amend=True, no_edit=True)
         git_client.status()
 
+    def run_chain(gc: GitClient, *steps: Callable[[GitClient], None]) -> None:
+        for step in steps:
+            step(gc)
+
     default_bindings: dict[str, Callable[[GitClient], None]] = {
-        "\t": lambda gc: (
-            gc.fetch(),
-            gc.rebase("origin/main"),
-            gc.status(),
+        "\t": lambda gc: run_chain(
+            gc,
+            lambda g: g.fetch(),
+            lambda g: g.rebase("origin/main"),
+            lambda g: g.status(),
         ),
-        "27[A": lambda gc: (gc.push(), gc.status()),
-        "27[1;2A": lambda gc: (gc.push(force=True), gc.status()),
-        "27[B": lambda gc: (gc.pull(), gc.status()),
-        "27[1;2B": lambda gc: (gc.pull_rebase(), gc.status()),
-        "27[D": lambda gc: (gc.switch_to_previous_branch(), gc.status()),
-        "27[1;2D": lambda gc: (gc.rebase_abort(), gc.status()),
-        "27[C": lambda gc: (gc.checkout_branch_using_fzf(), gc.status()),
-        "27[1;2C": lambda gc: (gc.rebase_continue(), gc.status()),
-        "27[Z": lambda gc: (
-            gc.fetch(),
-            gc.rebase_interactive(),
-            gc.status(),
+        "27[A": lambda gc: run_chain(
+            gc, lambda g: g.push(), lambda g: g.status()
         ),
-        "A": lambda gc: (gc.add_all(), gc.status()),
+        "27[1;2A": lambda gc: run_chain(
+            gc, lambda g: g.push(force=True), lambda g: g.status()
+        ),
+        "27[B": lambda gc: run_chain(
+            gc, lambda g: g.pull(), lambda g: g.status()
+        ),
+        "27[1;2B": lambda gc: run_chain(
+            gc, lambda g: g.pull_rebase(), lambda g: g.status()
+        ),
+        "27[D": lambda gc: run_chain(
+            gc, lambda g: g.switch_to_previous_branch(), lambda g: g.status()
+        ),
+        "27[1;2D": lambda gc: run_chain(
+            gc, lambda g: g.rebase_abort(), lambda g: g.status()
+        ),
+        "27[C": lambda gc: run_chain(
+            gc, lambda g: g.checkout_branch_using_fzf(), lambda g: g.status()
+        ),
+        "27[1;2C": lambda gc: run_chain(
+            gc, lambda g: g.rebase_continue(), lambda g: g.status()
+        ),
+        "27[Z": lambda gc: run_chain(
+            gc,
+            lambda g: g.fetch(),
+            lambda g: g.rebase_interactive(),
+            lambda g: g.status(),
+        ),
+        "A": lambda gc: run_chain(
+            gc, lambda g: g.add_all(), lambda g: g.status()
+        ),
         "B": lambda gc: gc.branch_latest(all=True),
-        "C": lambda gc: (gc.commit(), gc.status()),
+        "C": lambda gc: run_chain(
+            gc, lambda g: g.commit(), lambda g: g.status()
+        ),
         "D": lambda gc: gc.diff(),
-        "F": lambda gc: (gc.fetch(), gc.status()),
+        "F": lambda gc: run_chain(
+            gc, lambda g: g.fetch(), lambda g: g.status()
+        ),
         "H": lambda gc: gc.show(),
         "L": lambda gc: gc.log(),
         "N": lambda _gc: new_branch(),
         "O": lambda _gc: checkout_from_clipboard(),
         "S": lambda gc: gc.status(),
-        "M": lambda gc: (gc.switch_to_main(), gc.pull(), gc.status()),
-        "W": lambda gc: (gc.commit(message="WIP"), gc.status()),
+        "M": lambda gc: run_chain(
+            gc,
+            lambda g: g.switch_to_main(),
+            lambda g: g.pull(),
+            lambda g: g.status(),
+        ),
+        "W": lambda gc: run_chain(
+            gc, lambda g: g.commit(message="WIP"), lambda g: g.status()
+        ),
         "!": lambda _gc: hard_reset_flow(),
-        "8": lambda gc: (gc.reset_hard("HEAD^"), gc.status()),
-        "9": lambda gc: (gc.reset_soft_unstage("HEAD^"), gc.status()),
-        "0": lambda gc: (gc.reset_soft_unstage(), gc.status()),
+        "8": lambda gc: run_chain(
+            gc, lambda g: g.reset_hard("HEAD^"), lambda g: g.status()
+        ),
+        "9": lambda gc: run_chain(
+            gc, lambda g: g.reset_soft_unstage("HEAD^"), lambda g: g.status()
+        ),
+        "0": lambda gc: run_chain(
+            gc, lambda g: g.reset_soft_unstage(), lambda g: g.status()
+        ),
         "+": lambda _gc: amend_if_possible(),
         "bl1": lambda gc: gc.branch_latest(),
         "bl2": lambda gc: gc.branch_latest(all=True),
-        "cm2": lambda gc: (gc.commit(amend=True), gc.status()),
-        "cm3": lambda gc: (gc.commit(amend=True, no_edit=True), gc.status()),
+        "cm2": lambda gc: run_chain(
+            gc, lambda g: g.commit(amend=True), lambda g: g.status()
+        ),
+        "cm3": lambda gc: run_chain(
+            gc,
+            lambda g: g.commit(amend=True, no_edit=True),
+            lambda g: g.status(),
+        ),
         "di1": lambda gc: gc.diff(),
         "di2": lambda gc: gc.diff(target="HEAD"),
     }

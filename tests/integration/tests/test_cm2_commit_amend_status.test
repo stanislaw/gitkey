@@ -1,0 +1,16 @@
+RUN: rm -rf %t
+RUN: mkdir -p %t/home %t/repo %t/bin
+RUN: cd %t/repo && git init -b main
+RUN: cd %t/repo && git config user.name gitkey-test
+RUN: cd %t/repo && git config user.email gitkey-test@example.invalid
+RUN: cd %t/repo && echo "fixture" > README.txt
+RUN: cd %t/repo && git add README.txt
+RUN: cd %t/repo && git commit -m "Initial commit"
+RUN: cd %t/repo && echo "change" >> README.txt
+RUN: cd %t/repo && git add README.txt
+RUN: printf '#!/bin/sh\necho \"Amended\" > \"$1\"\n' > %t/bin/editor
+RUN: chmod +x %t/bin/editor
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'cm2' | env GIT_EDITOR=%t/bin/editor PATH=%t/bin:$PATH $GITKEY_BIN | filecheck %s"
+
+CHECK: git commit --amend
+CHECK: git status
