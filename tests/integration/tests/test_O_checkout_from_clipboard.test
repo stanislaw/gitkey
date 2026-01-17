@@ -9,8 +9,8 @@ RUN: git add README.txt
 RUN: git commit -m "Initial commit"
 RUN: git checkout -b feature
 RUN: git checkout main
-RUN: printf '#!/bin/sh\necho feature\n' > %t/bin/xclip
-RUN: chmod +x %t/bin/xclip
+RUN: printf '#!/bin/sh\necho feature\n' > %t/bin/%copy_and_paste_tool
+RUN: chmod +x %t/bin/%copy_and_paste_tool
 RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'O' | env %gitkey_env PATH=%t/bin:$PATH $GITKEY_BIN | filecheck %s"
 
 CHECK: git rev-parse --verify feature

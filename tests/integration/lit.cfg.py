@@ -26,5 +26,18 @@ config.substitutions.append(
     )
 )
 
+if sys.platform.startswith("linux"):
+    copy_and_paste_tool = "xclip"
+elif sys.platform == "darwin":
+    copy_and_paste_tool = "pbpaste"
+else:
+    raise RuntimeError(f"Unsupported platform: {sys.platform}")
+config.substitutions.append(
+    (
+        "%copy_and_paste_tool",
+        copy_and_paste_tool
+    )
+)
+
 expect_exit = os.path.join(TOOLS_DIR, "expect_exit.py")
 config.substitutions.append(("%expect_exit", f"{sys.executable} {expect_exit}"))
