@@ -1,23 +1,24 @@
 RUN: rm -rf %t
 RUN: mkdir -p %t/home %t/repo
-RUN: cd %t/repo && git init -b main
-RUN: cd %t/repo && git config user.name gitkey-test
-RUN: cd %t/repo && git config user.email gitkey-test@example.invalid
-RUN: cd %t/repo && echo "base" > README.txt
-RUN: cd %t/repo && git add README.txt
-RUN: cd %t/repo && git commit -m "Base commit"
-RUN: cd %t/repo && git checkout -b feature
-RUN: cd %t/repo && echo "feature change" > README.txt
-RUN: cd %t/repo && git add README.txt
-RUN: cd %t/repo && git commit -m "Feature commit"
-RUN: cd %t/repo && git checkout main
-RUN: cd %t/repo && echo "main change" > README.txt
-RUN: cd %t/repo && git add README.txt
-RUN: cd %t/repo && git commit -m "Main commit"
-RUN: cd %t/repo && git checkout feature
-RUN: cd %t/repo && git rebase main || true
-RUN: cd %t/repo && echo "resolved" > README.txt
-RUN: cd %t/repo && git add README.txt
+RUN: cd %t/repo
+RUN: git init -b main
+RUN: git config user.name gitkey-test
+RUN: git config user.email gitkey-test@example.invalid
+RUN: echo "base" > README.txt
+RUN: git add README.txt
+RUN: git commit -m "Base commit"
+RUN: git checkout -b feature
+RUN: echo "feature change" > README.txt
+RUN: git add README.txt
+RUN: git commit -m "Feature commit"
+RUN: git checkout main
+RUN: echo "main change" > README.txt
+RUN: git add README.txt
+RUN: git commit -m "Main commit"
+RUN: git checkout feature
+RUN: git rebase main || true
+RUN: echo "resolved" > README.txt
+RUN: git add README.txt
 RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[1;2C' | env %gitkey_env GIT_EDITOR=true $GITKEY_BIN | filecheck %s"
 
 CHECK: git rebase --continue

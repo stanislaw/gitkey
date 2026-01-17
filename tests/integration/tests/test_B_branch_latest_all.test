@@ -1,14 +1,15 @@
 RUN: rm -rf %t
 RUN: mkdir -p %t/home %t/repo %t/remote.git
 RUN: git init --bare %t/remote.git
-RUN: cd %t/repo && git init -b main
-RUN: cd %t/repo && git config user.name gitkey-test
-RUN: cd %t/repo && git config user.email gitkey-test@example.invalid
-RUN: cd %t/repo && git remote add origin %t/remote.git
-RUN: cd %t/repo && echo "fixture" > README.txt
-RUN: cd %t/repo && git add README.txt
-RUN: cd %t/repo && git commit -m "Initial commit"
-RUN: cd %t/repo && git push -u origin main
+RUN: cd %t/repo
+RUN: git init -b main
+RUN: git config user.name gitkey-test
+RUN: git config user.email gitkey-test@example.invalid
+RUN: git remote add origin %t/remote.git
+RUN: echo "fixture" > README.txt
+RUN: git add README.txt
+RUN: git commit -m "Initial commit"
+RUN: git push -u origin main
 RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'B' | env %gitkey_env $GITKEY_BIN | filecheck %s"
 
 CHECK: git for-each-ref
