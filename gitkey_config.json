@@ -1,0 +1,9 @@
+{
+  "name": "gitkey",
+  "version": "0.1.0",
+  "description": "Gitkey configuration JSON file",
+  "git_add_config_comment": "Available options are: 'all', 'update' ",
+  "git_add_config": "all",
+  "git_clean_config_comment": "Available options are: 'f', 'd', 'x', 'X' ",
+  "git_clean_config": "d"
+}

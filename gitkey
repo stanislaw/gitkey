@@ -5,6 +5,7 @@ import sys
 import subprocess
 import termios
 import tty
+import json
 from datetime import datetime
 from pathlib import Path
 from sys import platform
@@ -41,10 +42,19 @@ class RFXCustomFormatter:
     def format(message: str, color: str) -> str:
         return color + message + RFXCustomFormatter.reset
 
+    @staticmethod
+    def load_config():
+        CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".local", "bin", "gitkey_config.json")
+        with open(CONFIG_FILE) as f:
+            return json.load(f)
 
 class GitClient:
-    def add_all(self) -> None:
-        command = "git add --all"
+    def __init__(self):
+        self.gitkey_cfg_json = RFXCustomFormatter.load_config()
+
+    def add(self) -> None:
+        git_add_config = self.gitkey_cfg_json["git_add_config"]
+        command = f"git add --{git_add_config}"
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(command.split(" "), capture_output=False, text=True)
@@ -274,7 +284,8 @@ class GitClient:
         )
 
     def clean_all(self) -> None:
-        clean_command = "git clean -d --force"
+        git_clean_config = self.gitkey_cfg_json["git_clean_config"]
+        clean_command = f"git clean -{git_clean_config} --force"
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(clean_command, command_color)
         subprocess.run(
@@ -327,9 +338,6 @@ class GitClient:
 
 
 def get_key() -> str:
-    if os.environ.get("GITKEY_TEST_INPUT") == "1" or not sys.stdin.isatty():
-        return sys.stdin.read(1)
-
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     try:
@@ -350,8 +358,6 @@ def main() -> None:
 
     while True:
         c = get_key()
-        if c == "":
-            sys.exit(0)
         current_pattern += c
 
         if debug:
@@ -439,7 +445,7 @@ def main() -> None:
 
         else:
             if c == "A":
-                git_client.add_all()
+                git_client.add()
                 git_client.status()
                 sys.exit(0)
 
@@ -550,7 +556,7 @@ def main() -> None:
                 if git_client.is_top_merge_commit():
                     print("error: cannot perform + on a merge commit.")
                     sys.exit(1)
-                git_client.add_all()
+                git_client.add()
                 git_client.status()
                 git_client.commit(amend=True, no_edit=True)
                 git_client.status()
