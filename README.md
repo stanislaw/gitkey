@@ -47,6 +47,10 @@ greatly reduce mental effort.
 | `Shift+Down`         | `git pull --rebase`                                   |
 | `TAB` 🔥             | `git fetch origin && git rebase origin/main`          |
 | `Shift+TAB` 🔥       | `git fetch origin && git rebase origin/main -i`       |
+| `[`                  | `git stash`                                           |
+| `{`                  | `git stash --include-untracked`                       |
+| `]`                  | `git stash pop`                                       |
+| `}`                  | `git stash show --include-untracked`                  |
 | `bl1`                | Currently vacant. Moved to `B`.                       |
 | `bl2`                | The same as `B` but also shows the remote branches.   |
 | `cm1`                | Currently vacant. Moved to `C`.                       |

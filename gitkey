@@ -242,6 +242,30 @@ class GitClient:
             status_command.split(" "), capture_output=False, text=True
         )
 
+    def stash(self, include_untracked: bool = False) -> None:
+        args = ["git", "stash"]
+        if include_untracked:
+            args.append("--include-untracked")
+        command = " ".join(args)
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(args, capture_output=False, text=True)
+
+    def stash_pop(self) -> None:
+        command = "git stash pop"
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(command.split(" "), capture_output=False, text=True)
+
+    def stash_show(self, include_untracked: bool = False) -> None:
+        args = ["git", "stash", "show"]
+        if include_untracked:
+            args.append("--include-untracked")
+        command = " ".join(args)
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(args, capture_output=False, text=True)
+
     def switch_to_main(self) -> None:
         switch_command = "git switch main"
         command_color = RFXCustomFormatter.inverted
@@ -541,6 +565,10 @@ def main() -> None:
         ),
         "di1": lambda gc: gc.diff(),
         "di2": lambda gc: gc.diff(target="HEAD"),
+        "[": lambda gc: gc.stash(),
+        "{": lambda gc: gc.stash(include_untracked=True),
+        "]": lambda gc: gc.stash_pop(),
+        "}": lambda gc: gc.stash_show(include_untracked=True),
     }
 
     bindings = load_user_bindings(default_bindings)
