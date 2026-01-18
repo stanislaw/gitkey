@@ -47,6 +47,7 @@ greatly reduce mental effort.
 | `Shift+Down`         | `git pull --rebase`                                   |
 | `TAB` 🔥             | `git fetch origin && git rebase origin/main`          |
 | `Shift+TAB` 🔥       | `git fetch origin && git rebase origin/main -i`       |
+| `Delete`             | `git rm --cached <file> && git commit --amend --no-edit` |
 | `[`                  | `git stash`                                           |
 | `{`                  | `git stash --include-untracked`                       |
 | `]`                  | `git stash pop`                                       |

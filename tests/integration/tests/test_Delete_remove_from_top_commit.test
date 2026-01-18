@@ -1,0 +1,19 @@
+RUN: rm -rf %t
+RUN: mkdir -p %t/home %t/repo %t/bin
+RUN: cd %t/repo
+RUN: git init -b main
+RUN: git config user.name gitkey-test
+RUN: git config user.email gitkey-test@example.invalid
+RUN: echo "base" > README.txt
+RUN: git add README.txt
+RUN: git commit -m "Base commit"
+RUN: echo "new" > NEW.txt
+RUN: echo "change" >> README.txt
+RUN: git add NEW.txt README.txt
+RUN: git commit -m "Add and modify"
+RUN: printf '#!/bin/sh\nread line\necho \"$line\"\n' > %t/bin/fzf
+RUN: chmod +x %t/bin/fzf
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[3~' | env %gitkey_env PATH=%t/bin:$PATH $GITKEY_BIN | filecheck %s"
+
+CHECK: git rm --cached -- NEW.txt
+CHECK: git commit --amend --no-edit
