@@ -10,5 +10,5 @@ RUN: git commit -m "Initial commit"
 RUN: echo "change" >> README.txt
 RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'A' | env %gitkey_env $GITKEY_BIN | filecheck %s"
 
-CHECK: git add --all
+CHECK: git add .
 CHECK: git status

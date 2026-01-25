@@ -13,7 +13,7 @@
 # CHECK: git add --update
 
 def my_add(gc):
-    gc.add(all=False, update=True)
+    gc.add(include_untracked=False)
 
 
 BINDINGS = {
