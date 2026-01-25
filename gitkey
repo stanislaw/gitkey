@@ -44,12 +44,15 @@ class RFXCustomFormatter:
 
 
 class GitClient:
-    def add(self, include_untracked: bool = True) -> None:
-        command: str
-        if include_untracked:
-            command = "git add ."
-        else:
-            command = "git add --update ."
+    def add(self, include_untracked: bool = True, patch: bool = False) -> None:
+        patch_string = "--patch" if patch else ""
+        include_untracked_string = "--update" if not include_untracked else ""
+
+        command: str = (
+            f"git add . {patch_string} {include_untracked_string}".replace(
+                "  ", " "
+            ).strip()
+        )
 
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(command, command_color)
@@ -602,6 +605,8 @@ def main() -> None:
         ),
         "+": lambda _gc: amend_if_possible(include_untracked=True),
         "=": lambda _gc: amend_if_possible(include_untracked=False),
+        "aa": lambda gc: gc.add(include_untracked=False),
+        "ap": lambda gc: gc.add(include_untracked=False, patch=True),
         "bl1": lambda gc: gc.branch_latest(),
         "bl2": lambda gc: gc.branch_latest(all=True),
         "cm2": lambda gc: run_chain(

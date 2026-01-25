@@ -10,7 +10,7 @@
 # RUN: cp %s %t/home/config.py
 # RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'A' | env %gitkey_env GITKEY_CONFIG=%t/home/config.py $GITKEY_BIN | filecheck %s"
 
-# CHECK: git add --update
+# CHECK: git add . --update
 
 def my_add(gc):
     gc.add(include_untracked=False)
