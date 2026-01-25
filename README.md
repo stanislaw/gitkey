@@ -25,8 +25,15 @@ greatly reduce mental effort.
 | `ap`            | `git add --patch --update .`                                  |
 | `aP`            | `git add --intent-to-add . && git add --patch`                |
 | `B`             | `git for-each-ref ...` (show latest branches)                 |
+| `bl1`           | Currently vacant. Moved to `B`.                               |
+| `bl2`           | The same as `B` but also shows the remote branches.           |
 | `C`             | `git commit`                                                  |
+| `cm1`           | Currently vacant. Moved to `C`.                               |
+| `cm2`           | `git commit --amend`                                          |
+| `cm3`           | `git commit --amend --no-edit` (`+` without `add`).           |
 | `D`             | `git diff`                                                    |
+| `di1`           | Currently vacant. Moved to `D`.                               |
+| `di2`           | `git diff HEAD`                                               |
 | `F`             | `git fetch`                                                   |
 | `H`             | `git show`                                                    |
 | `L`             | `git log`                                                     |
@@ -56,13 +63,6 @@ greatly reduce mental effort.
 | `{`             | `git stash --include-untracked`                               |
 | `]`             | `git stash pop`                                               |
 | `}`             | `git stash show --include-untracked`                          |
-| `bl1`           | Currently vacant. Moved to `B`.                               |
-| `bl2`           | The same as `B` but also shows the remote branches.           |
-| `cm1`           | Currently vacant. Moved to `C`.                               |
-| `cm2`           | `git commit --amend`                                          |
-| `cm3`           | `git commit --amend --no-edit` (`+` without `add`).           |
-| `di1`           | Currently vacant. Moved to `D`.                               |
-| `di2`           | `git diff HEAD`                                               |
 
 ## Installation
 
