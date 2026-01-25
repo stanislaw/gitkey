@@ -371,14 +371,7 @@ class GitClient:
             self.reset_soft_unstage()
             return
 
-        # Get repository root via git (works from subdirectories).
-        repo_root = Path(
-            subprocess.check_output(
-                ["git", "rev-parse", "--show-toplevel"], text=True
-            ).strip()
-        )
-
-        patches_dir = repo_root / ".git" / "info" / "gitkey" / "patches"
+        patches_dir = Path.home() / ".gitkey" / "patches"
         patches_dir.mkdir(parents=True, exist_ok=True)
 
         now = datetime.now()

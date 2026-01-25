@@ -15,7 +15,7 @@ RUN: %expect_exit 0 bash -c "cd %t/repo && printf '8y\n' | env %gitkey_env $GITK
 CHECK: git add --intent-to-add .
 CHECK: git diff HEAD^
 CHECK: Creating a patch:
-CHECK: {{.*}}/.git/info/gitkey/patches/{{.*}}.patch
+CHECK: {{.*}}.gitkey/patches/{{.*}}.patch
 CHECK: git reset
 CHECK: git reset --hard HEAD^
 CHECK: git status
