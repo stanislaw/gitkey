@@ -18,51 +18,51 @@ effort.
 🔥 indicates multi-step "combo" key sequences that run several Git commands and
 greatly reduce mental effort.
 
-| Key / Shortcut       | Action                                                |
-|----------------------|-------------------------------------------------------|
-| `A`                  | `git add .`                                           |
-| `aa`                 | `git add --update .`                                  |
-| `ap`                 | `git add --patch --update .`                          |
-| `aP`                 | `git add --intent-to-add . && git add --patch`        |
-| `B`                  | `git for-each-ref ...` (show latest branches)         |
-| `C`                  | `git commit`                                          |
-| `D`                  | `git diff`                                            |
-| `F`                  | `git fetch`                                           |
-| `H`                  | `git show`                                            |
-| `L`                  | `git log`                                             |
-| `M`                  | `git switch main`                                     |
-| `N`                  | `git checkout <new_branch>` - promts a branch name.   |
-| `O`                  | `git checkout <branch>` - take branch from buffer     |
-| `S`                  | `git status`                                          |
-| `W`                  | `git commit -m "WIP`                                  |
-| `8`                  | `git reset HEAD^ --hard`                              |
-| `9`                  | `git reset HEAD^`                                     |
-| `0`                  | `git reset`                                           |
-| `!` 🔥               | `git reset --hard`, preserving the diff in a tmp dir. |
-| `+` 🔥               | `git add . && git commit --amend --no-edit`           |
-| `=` 🔥               | `git add --update . && git commit --amend --no-edit`  |
-| `Left      `         | `git switch -`                                        |
-| `Shift+Left`         | `git rebase --abort`                                  |
-| `Right` 🔥           | `git checkout $(fzf)` - Switch to branch from GUI     |
-| `Shift+Right`        | `git rebase --continue`                               |
-| `Up`                 | `git push`                                            |
-| `Shift+Up`           | `git push --force`                                    |
-| `Down`               | `git pull`                                            |
-| `Shift+Down`         | `git pull --rebase`                                   |
-| `TAB` 🔥             | `git fetch origin && git rebase origin/main`          |
-| `Shift+TAB` 🔥       | `git fetch origin && git rebase origin/main -i`       |
-| `Delete`             | `git rm --cached <file> && git commit --amend --no-edit` |
-| `[`                  | `git stash`                                           |
-| `{`                  | `git stash --include-untracked`                       |
-| `]`                  | `git stash pop`                                       |
-| `}`                  | `git stash show --include-untracked`                  |
-| `bl1`                | Currently vacant. Moved to `B`.                       |
-| `bl2`                | The same as `B` but also shows the remote branches.   |
-| `cm1`                | Currently vacant. Moved to `C`.                       |
-| `cm2`                | `git commit --amend`                                  |
-| `cm3`                | `git commit --amend --no-edit` (`+` without `add`).   |
-| `di1`                | Currently vacant. Moved to `D`.                       |
-| `di2`                | `git diff HEAD`                                       |
+| Key / Shortcut  | Action                                                        |
+|-----------------|---------------------------------------------------------------|
+| `A`             | `git add .`                                                   |
+| `aa`            | `git add --update .`                                          |
+| `ap`            | `git add --patch --update .`                                  |
+| `aP`            | `git add --intent-to-add . && git add --patch`                |
+| `B`             | `git for-each-ref ...` (show latest branches)                 |
+| `C`             | `git commit`                                                  |
+| `D`             | `git diff`                                                    |
+| `F`             | `git fetch`                                                   |
+| `H`             | `git show`                                                    |
+| `L`             | `git log`                                                     |
+| `M`             | `git switch main`                                             |
+| `N`             | `git checkout <new_branch>` - promts a branch name.           |
+| `O`             | `git checkout <branch>` - take branch from buffer             |
+| `S`             | `git status`                                                  |
+| `W`             | `git commit -m "WIP`                                          |
+| `8`             | `git reset HEAD^ --hard`                                      |
+| `9`             | `git reset HEAD^`                                             |
+| `0`             | `git reset`                                                   |
+| `!` 🔥          | `git reset --hard`, preserving the diff in a tmp dir.         |
+| `+` 🔥          | `git add . && git commit --amend --no-edit`                   |
+| `=` 🔥          | `git add --update . && git commit --amend --no-edit`          |
+| `Left      `    | `git switch -`                                                |
+| `Shift+Left`    | `git rebase --abort`                                          |
+| `Right` 🔥      | `git checkout $(fzf)` - Switch to branch from GUI             |
+| `Shift+Right`   | `git rebase --continue`                                       |
+| `Up`            | `git push`                                                    |
+| `Shift+Up`      | `git push --force`                                            |
+| `Down`          | `git pull`                                                    |
+| `Shift+Down`    | `git pull --rebase`                                           |
+| `TAB` 🔥        | `git fetch origin && git rebase origin/main`                  |
+| `Shift+TAB` 🔥  | `git fetch origin && git rebase origin/main -i`               |
+| `Delete`        | `git rm --cached <file> && git commit --amend --no-edit`      |
+| `[`             | `git stash`                                                   |
+| `{`             | `git stash --include-untracked`                               |
+| `]`             | `git stash pop`                                               |
+| `}`             | `git stash show --include-untracked`                          |
+| `bl1`           | Currently vacant. Moved to `B`.                               |
+| `bl2`           | The same as `B` but also shows the remote branches.           |
+| `cm1`           | Currently vacant. Moved to `C`.                               |
+| `cm2`           | `git commit --amend`                                          |
+| `cm3`           | `git commit --amend --no-edit` (`+` without `add`).           |
+| `di1`           | Currently vacant. Moved to `D`.                               |
+| `di2`           | `git diff HEAD`                                               |
 
 ## Installation
 
