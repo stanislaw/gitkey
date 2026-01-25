@@ -20,7 +20,9 @@ greatly reduce mental effort.
 
 | Key / Shortcut       | Action                                                |
 |----------------------|-------------------------------------------------------|
-| `A`                  | `git add .`                                       |
+| `A`                  | `git add .`                                           |
+| `aa`                 | `git add . --update`                                  |
+| `ap`                 | `git add . --patch --update`                          |
 | `B`                  | `git for-each-ref ...` (show latest branches)         |
 | `C`                  | `git commit`                                          |
 | `D`                  | `git diff`                                            |
