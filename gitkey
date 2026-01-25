@@ -327,10 +327,12 @@ class GitClient:
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(args, capture_output=False, text=True)
 
-    def reset_hard(self, revision: str = "HEAD") -> None:
+    def reset_hard(
+        self, revision: str = "HEAD", include_untracked: bool = False
+    ) -> None:
         # First, preserve the diff.
         print("")
-        self._apply_patch(revision)
+        self._apply_patch(revision, include_untracked=include_untracked)
         print("")
 
         revision_argument = revision if len(revision) > 0 else ""
@@ -349,9 +351,12 @@ class GitClient:
             clean_command.split(" "), capture_output=False, text=True
         )
 
-    def _apply_patch(self, revision: str) -> None:
+    def _apply_patch(
+        self, revision: str, include_untracked: bool = False
+    ) -> None:
         # This is needed to include untracked files in the diff.
-        self.add_add_untracked_without_staging()
+        if include_untracked:
+            self.add_add_untracked_without_staging()
 
         diff_command = f"git diff {revision}"
         command_color = RFXCustomFormatter.inverted
@@ -360,6 +365,13 @@ class GitClient:
             f"git diff {revision}".split(" "), capture_output=True, text=True
         )
         assert result.returncode == 0
+
+        # This reverts the staging of untracked files. This also reverts any
+        # changes to tracked files that were staged, but that is ok since this
+        # patch preservation is anyway a very special operation.
+        if include_untracked:
+            self.reset_soft_unstage()
+
         if len(result.stdout) == 0:
             print(
                 "**********************************************************************"
@@ -368,7 +380,6 @@ class GitClient:
             print(
                 "**********************************************************************"
             )
-            self.reset_soft_unstage()
             return
 
         patches_dir = Path.home() / ".gitkey" / "patches"
@@ -384,11 +395,6 @@ class GitClient:
         print("Creating a patch:")
         print(path_to_out_patch.as_posix())
         print("*" * len(path_to_out_patch.as_posix()))
-
-        # This reverts the staging of untracked files. This also reverts any
-        # changes to tracked files that were staged, but that is ok since this
-        # patch preservation is anyway a very special operation.
-        self.reset_soft_unstage()
 
     def is_top_merge_commit(self) -> bool:
         is_merge = (
@@ -507,7 +513,7 @@ def main() -> None:
             print("Please enter 'y' or 'n'.")
             sys.exit(1)
 
-        git_client.reset_hard()
+        git_client.reset_hard(include_untracked=True)
         git_client.clean_all()
         git_client.status()
 
@@ -518,7 +524,7 @@ def main() -> None:
             print("Please enter 'y' or 'n'.")
             sys.exit(1)
 
-        git_client.reset_hard("HEAD^")
+        git_client.reset_hard("HEAD^", include_untracked=False)
         git_client.status()
 
     def soft_reset_to_previous_commit_flow() -> None:
