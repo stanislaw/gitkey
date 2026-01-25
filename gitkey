@@ -44,14 +44,12 @@ class RFXCustomFormatter:
 
 
 class GitClient:
-    def add(self, all: bool = False, update: bool = False) -> None:
-        command = "git add"
-        if all:
-            command += " --all"
-        elif update:
-            command += " --update"
+    def add(self, include_untracked: bool = True) -> None:
+        command: str
+        if include_untracked:
+            command = "git add ."
         else:
-            command += " ."
+            command = "git add --update ."
 
         command_color = RFXCustomFormatter.inverted
         RFXCustomFormatter.print(command, command_color)
@@ -490,11 +488,12 @@ def main() -> None:
         git_client.clean_all()
         git_client.status()
 
-    def amend_if_possible() -> None:
+    def amend_if_possible(*, include_untracked: bool) -> None:
         if git_client.is_top_merge_commit():
-            print("error: cannot perform + on a merge commit.")
+            symbol = "=" if not include_untracked else "+"
+            print(f"error: cannot perform {symbol} on a merge commit.")
             sys.exit(1)
-        git_client.add(all=True)
+        git_client.add(include_untracked=include_untracked)
         git_client.status()
         git_client.commit(amend=True, no_edit=True)
         git_client.status()
@@ -567,7 +566,7 @@ def main() -> None:
             lambda g: g.status(),
         ),
         "A": lambda gc: run_chain(
-            gc, lambda g: g.add(all=True), lambda g: g.status()
+            gc, lambda g: g.add(include_untracked=True), lambda g: g.status()
         ),
         "B": lambda gc: gc.branch_latest(all=True),
         "C": lambda gc: run_chain(
@@ -601,7 +600,8 @@ def main() -> None:
         "0": lambda gc: run_chain(
             gc, lambda g: g.reset_soft_unstage(), lambda g: g.status()
         ),
-        "+": lambda _gc: amend_if_possible(),
+        "+": lambda _gc: amend_if_possible(include_untracked=True),
+        "=": lambda _gc: amend_if_possible(include_untracked=False),
         "bl1": lambda gc: gc.branch_latest(),
         "bl2": lambda gc: gc.branch_latest(all=True),
         "cm2": lambda gc: run_chain(

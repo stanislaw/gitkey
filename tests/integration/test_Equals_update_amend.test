@@ -8,9 +8,9 @@ RUN: echo "fixture" > README.txt
 RUN: git add README.txt
 RUN: git commit -m "Initial commit"
 RUN: echo "change" >> README.txt
-RUN: %expect_exit 0 bash -c "cd %t/repo && printf '+' | env %gitkey_env $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "printf '=' | env %gitkey_env $GITKEY_BIN | filecheck %s"
 
-CHECK: git add .
+CHECK: git add --update
 CHECK: git status
 CHECK: git commit --amend --no-edit
 CHECK: git status

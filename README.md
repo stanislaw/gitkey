@@ -20,7 +20,7 @@ greatly reduce mental effort.
 
 | Key / Shortcut       | Action                                                |
 |----------------------|-------------------------------------------------------|
-| `A`                  | `git add --all`                                       |
+| `A`                  | `git add .`                                       |
 | `B`                  | `git for-each-ref ...` (show latest branches)         |
 | `C`                  | `git commit`                                          |
 | `D`                  | `git diff`                                            |
@@ -36,7 +36,8 @@ greatly reduce mental effort.
 | `9`                  | `git reset HEAD^`                                     |
 | `0`                  | `git reset`                                           |
 | `!` 🔥               | `git reset --hard`, preserving the diff in a tmp dir. |
-| `+` 🔥               | `git add --all && git commit --amend --no-edit`       |
+| `+` 🔥               | `git add . && git commit --amend --no-edit`           |
+| `=` 🔥               | `git add --update . && git commit --amend --no-edit`  |
 | `Left      `         | `git switch -`                                        |
 | `Shift+Left`         | `git rebase --abort`                                  |
 | `Right` 🔥           | `git checkout $(fzf)` - Switch to branch from GUI     |
