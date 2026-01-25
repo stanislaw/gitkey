@@ -10,7 +10,12 @@ RUN: git commit -m "First commit"
 RUN: echo "second" >> README.txt
 RUN: git add README.txt
 RUN: git commit -m "Second commit"
-RUN: %expect_exit 0 bash -c "cd %t/repo && printf '8' | env %gitkey_env $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '8y\n' | env %gitkey_env $GITKEY_BIN | filecheck %s"
 
+CHECK: git add --intent-to-add .
+CHECK: git diff HEAD^
+CHECK: Creating a patch:
+CHECK: {{.*}}/.git/info/gitkey/patches/{{.*}}.patch
+CHECK: git reset
 CHECK: git reset --hard HEAD^
 CHECK: git status

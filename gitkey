@@ -58,6 +58,12 @@ class GitClient:
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(command.split(" "), capture_output=False, text=True)
 
+    def add_add_untracked_without_staging(self) -> None:
+        command = "git add --intent-to-add ."
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(command.split(" "), capture_output=False, text=True)
+
     def add_patch_include_untracked(self) -> None:
         for command in ("git add --intent-to-add .", "git add --patch"):
             command_color = RFXCustomFormatter.inverted
@@ -321,10 +327,10 @@ class GitClient:
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(args, capture_output=False, text=True)
 
-    def reset_hard(self, revision: str = "") -> None:
+    def reset_hard(self, revision: str = "HEAD") -> None:
         # First, preserve the diff.
         print("")
-        self._apply_patch()
+        self._apply_patch(revision)
         print("")
 
         revision_argument = revision if len(revision) > 0 else ""
@@ -343,9 +349,15 @@ class GitClient:
             clean_command.split(" "), capture_output=False, text=True
         )
 
-    def _apply_patch(self) -> None:
+    def _apply_patch(self, revision: str) -> None:
+        # This is needed to include untracked files in the diff.
+        self.add_add_untracked_without_staging()
+
+        diff_command = f"git diff {revision}"
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(diff_command, command_color)
         result = subprocess.run(
-            "git diff HEAD".split(" "), capture_output=True, text=True
+            f"git diff {revision}".split(" "), capture_output=True, text=True
         )
         assert result.returncode == 0
         if len(result.stdout) == 0:
@@ -356,10 +368,17 @@ class GitClient:
             print(
                 "**********************************************************************"
             )
+            self.reset_soft_unstage()
             return
 
-        path_to_user_dir = Path.home()
-        patches_dir = path_to_user_dir.joinpath("patches")
+        # Get repository root via git (works from subdirectories).
+        repo_root = Path(
+            subprocess.check_output(
+                ["git", "rev-parse", "--show-toplevel"], text=True
+            ).strip()
+        )
+
+        patches_dir = repo_root / ".git" / "info" / "gitkey" / "patches"
         patches_dir.mkdir(parents=True, exist_ok=True)
 
         now = datetime.now()
@@ -368,13 +387,15 @@ class GitClient:
 
         with open(path_to_out_patch, "w") as out_patch:
             out_patch.write(result.stdout)
-        print(
-            "**********************************************************************"
-        )
-        print(f"Created a patch: {path_to_out_patch}")
-        print(
-            "**********************************************************************"
-        )
+        print("*" * len(path_to_out_patch.as_posix()))
+        print("Creating a patch:")
+        print(path_to_out_patch.as_posix())
+        print("*" * len(path_to_out_patch.as_posix()))
+
+        # This reverts the staging of untracked files. This also reverts any
+        # changes to tracked files that were staged, but that is ok since this
+        # patch preservation is anyway a very special operation.
+        self.reset_soft_unstage()
 
     def is_top_merge_commit(self) -> bool:
         is_merge = (
@@ -497,6 +518,26 @@ def main() -> None:
         git_client.clean_all()
         git_client.status()
 
+    def hard_reset_to_previous_commit_flow() -> None:
+        git_client.status()
+        response = input("Continue? [y/n]: ").strip().lower()
+        if response not in ["y", "yes"]:
+            print("Please enter 'y' or 'n'.")
+            sys.exit(1)
+
+        git_client.reset_hard("HEAD^")
+        git_client.status()
+
+    def soft_reset_to_previous_commit_flow() -> None:
+        git_client.status()
+        response = input("Continue? [y/n]: ").strip().lower()
+        if response not in ["y", "yes"]:
+            print("Please enter 'y' or 'n'.")
+            sys.exit(1)
+
+        git_client.reset_soft_unstage("HEAD^")
+        git_client.status()
+
     def amend_if_possible(*, include_untracked: bool) -> None:
         if git_client.is_top_merge_commit():
             symbol = "=" if not include_untracked else "+"
@@ -600,12 +641,8 @@ def main() -> None:
             gc, lambda g: g.commit(message="WIP"), lambda g: g.status()
         ),
         "!": lambda _gc: hard_reset_flow(),
-        "8": lambda gc: run_chain(
-            gc, lambda g: g.reset_hard("HEAD^"), lambda g: g.status()
-        ),
-        "9": lambda gc: run_chain(
-            gc, lambda g: g.reset_soft_unstage("HEAD^"), lambda g: g.status()
-        ),
+        "8": lambda _gc: hard_reset_to_previous_commit_flow(),
+        "9": lambda _gc: soft_reset_to_previous_commit_flow(),
         "0": lambda gc: run_chain(
             gc, lambda g: g.reset_soft_unstage(), lambda g: g.status()
         ),

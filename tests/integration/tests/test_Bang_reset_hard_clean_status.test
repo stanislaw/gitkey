@@ -11,7 +11,11 @@ RUN: echo "change" >> README.txt
 RUN: touch untracked.txt
 RUN: %expect_exit 0 bash -c "cd %t/repo && printf '!y\n' | env %gitkey_env $GITKEY_BIN | filecheck %s"
 
-CHECK: Created a patch: {{.*}}/home/patches/{{.*}}.patch
-CHECK: git reset --hard
+CHECK: git add --intent-to-add .
+CHECK: git diff HEAD
+CHECK: Creating a patch:
+CHECK: {{.*}}/.git/info/gitkey/patches/{{.*}}.patch
+CHECK: git reset
+CHECK: git reset --hard HEAD
 CHECK: git clean -d --force
 CHECK: git status
