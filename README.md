@@ -8,11 +8,6 @@ all the time. With gitkey, many Git operations go from `O(N)` keystrokes to
 To use it, the script needs to be integrated into your favorite shell using key
 bindings.
 
-The script itself is very simple and non-industrial. Adding unit/integration and
-end-to-end tests, and refactoring it into a better design, would be good future
-work. Even without that, the script already does its job well and saves a lot of
-effort.
-
 ## gitkey command reference
 
 🔥 indicates multi-step "combo" key sequences that run several Git commands and
