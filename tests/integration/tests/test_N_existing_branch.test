@@ -1,0 +1,15 @@
+RUN: rm -rf %t
+RUN: mkdir -p %t/home %t/repo
+RUN: cd %t/repo
+RUN: git init -b main
+RUN: git config user.name gitkey-test
+RUN: git config user.email gitkey-test@example.invalid
+RUN: echo "fixture" > README.txt
+RUN: git add README.txt
+RUN: git commit -m "Initial commit"
+RUN: git checkout -b tester/feature
+RUN: git checkout main
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'Ntester/feature\ny\n' | env %gitkey_env USER=tester $GITKEY_BIN | filecheck %s"
+
+CHECK: git rev-parse --verify tester/feature
+CHECK: Branch 'tester/feature' exists. Switch to it? [y/n]:

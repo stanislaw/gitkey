@@ -492,6 +492,19 @@ def main() -> None:
                 username = username.lower()
                 input_branch = f"{username}/{input_branch}"
 
+        if git_client.check_if_git_branch(input_branch):
+            response = (
+                input(f"Branch '{input_branch}' exists. Switch to it? [y/n]: ")
+                .strip()
+                .lower()
+            )
+            if response not in ["y", "yes"]:
+                print("Please enter 'y' or 'n'.")
+                sys.exit(1)
+
+            git_client.checkout_existing_branch(input_branch)
+            return
+
         git_client.checkout_new_branch(input_branch)
 
     def checkout_from_clipboard() -> None:
