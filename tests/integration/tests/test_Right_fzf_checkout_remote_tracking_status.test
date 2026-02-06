@@ -1,0 +1,27 @@
+RUN: rm -rf %t
+RUN: mkdir -p %t/home %t/repo %t/remote %t/bin
+RUN: git init -b main --bare %t/remote
+RUN: cd %t/repo
+RUN: git init -b main
+RUN: git config user.name gitkey-test
+RUN: git config user.email gitkey-test@example.invalid
+RUN: echo "base" > README.txt
+RUN: git add README.txt
+RUN: git commit -m "Base commit"
+RUN: git remote add origin %t/remote
+RUN: git push -u origin main
+RUN: git checkout -b remote-only
+RUN: echo "remote" >> README.txt
+RUN: git add README.txt
+RUN: git commit -m "Remote-only commit"
+RUN: git push origin remote-only
+RUN: git checkout main
+RUN: git branch -D remote-only
+RUN: git fetch origin
+RUN: printf '#!/bin/sh\ncat >/dev/null\necho origin/remote-only\n' > %t/bin/fzf
+RUN: chmod +x %t/bin/fzf
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[C' | env %gitkey_env PATH=%t/bin:$PATH $GITKEY_BIN | filecheck %s"
+
+CHECK: branch 'remote-only' set up to track 'origin/remote-only'.
+CHECK: On branch remote-only
+CHECK: git status
