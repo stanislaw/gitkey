@@ -134,8 +134,8 @@ class GitClient:
         subprocess.run(args, capture_output=False, check=True, text=True)
 
     def checkout_branch_using_fzf(self) -> None:
-        # Get the list of branches, sorted by committer date
-        branches = subprocess.run(
+        # Get the list of branches, sorted by committer date.
+        ordered_branches = subprocess.run(
             [
                 "git",
                 "for-each-ref",
@@ -149,6 +149,43 @@ class GitClient:
             check=True,
         ).stdout.splitlines()
 
+        local_branches = subprocess.run(
+            [
+                "git",
+                "for-each-ref",
+                "--sort=-committerdate",
+                "--format=%(refname:short)",
+                "refs/heads/",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.splitlines()
+
+        remote_branches = subprocess.run(
+            [
+                "git",
+                "for-each-ref",
+                "--sort=-committerdate",
+                "--format=%(refname:short)",
+                "refs/remotes/",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.splitlines()
+        remote_branches = [
+            branch for branch in remote_branches if not branch.endswith("/HEAD")
+        ]
+
+        local_set = set(local_branches)
+        remote_set = set(remote_branches)
+        branches = [
+            branch
+            for branch in ordered_branches
+            if branch in local_set or branch in remote_set
+        ]
+
         # Open fzf with terminal interaction
         fzf = subprocess.Popen(
             ["fzf", "--ansi", "--prompt=Select branch> "],
@@ -160,10 +197,19 @@ class GitClient:
         selected_branch = selected_branch.strip()
 
         if selected_branch:
-            if selected_branch.startswith("origin/"):
-                selected_branch = selected_branch.removeprefix("origin/")
+            if selected_branch in local_branches:
+                # Switch to the selected local branch.
+                subprocess.run(["git", "switch", selected_branch], check=True)
+                return
 
-            # Switch to the selected branch
+            if selected_branch in remote_branches:
+                # Create a local branch tracking the selected remote branch.
+                subprocess.run(
+                    ["git", "switch", "--track", selected_branch], check=True
+                )
+                return
+
+            # Fallback: attempt a direct switch if we cannot classify the ref.
             subprocess.run(["git", "switch", selected_branch], check=True)
         else:
             print("No branch selected.")
