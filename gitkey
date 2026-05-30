@@ -89,11 +89,14 @@ class GitClient:
 
     def commit(
         self,
+        allow_empty: bool = False,
         amend: bool = False,
         no_edit: bool = False,
         message: Optional[str] = None,
     ) -> None:
         args = ["git", "commit"]
+        if allow_empty:
+            args.append("--allow-empty")
         if amend:
             args.append("--amend")
         if no_edit:
@@ -696,7 +699,9 @@ def main() -> None:
             lambda g: g.status(),
         ),
         "W": lambda gc: run_chain(
-            gc, lambda g: g.commit(message="WIP"), lambda g: g.status()
+            gc,
+            lambda g: g.commit(message="WIP", allow_empty=True),
+            lambda g: g.status(),
         ),
         "!": lambda _gc: hard_reset_flow(),
         "8": lambda _gc: hard_reset_to_previous_commit_flow(),

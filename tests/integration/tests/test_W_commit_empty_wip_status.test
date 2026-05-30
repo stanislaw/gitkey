@@ -7,9 +7,9 @@ RUN: git config user.email gitkey-test@example.invalid
 RUN: echo "fixture" > README.txt
 RUN: git add README.txt
 RUN: git commit -m "Initial commit"
-RUN: echo "change" >> README.txt
-RUN: git add README.txt
 RUN: %expect_exit 0 bash -c "cd %t/repo && printf 'W' | env %gitkey_env $GITKEY_BIN | filecheck %s"
+RUN: test "$(git rev-list --count HEAD)" = "2"
+RUN: test "$(git log -1 --format=%%s)" = "WIP"
 
 CHECK: git commit --allow-empty -m WIP
 CHECK: git status
