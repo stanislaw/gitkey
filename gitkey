@@ -296,6 +296,13 @@ class GitClient:
         RFXCustomFormatter.print(command, command_color)
         subprocess.run(command.split(" "), capture_output=False, text=True)
 
+    def show_head_name_status(self) -> None:
+        args = ["git", "show", "--name-status", "HEAD"]
+        command = " ".join(args)
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(command, command_color)
+        subprocess.run(args, capture_output=False, text=True)
+
     def status(self) -> None:
         status_command = "git status"
         command_color = RFXCustomFormatter.inverted
@@ -711,6 +718,7 @@ def main() -> None:
         ),
         "+": lambda _gc: amend_if_possible(include_untracked=True),
         "=": lambda _gc: amend_if_possible(include_untracked=False),
+        ";": lambda gc: gc.show_head_name_status(),
         "aa": lambda gc: gc.add(include_untracked=False),
         "ap": lambda gc: gc.add(include_untracked=False, patch=True),
         "aP": lambda gc: gc.add_patch_include_untracked(),
