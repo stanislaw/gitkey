@@ -43,6 +43,7 @@ greatly reduce mental effort.
 | `!` 🔥          | `git reset --hard`, preserving the diff in a tmp dir.         |
 | `+` 🔥          | `git add . && git commit --amend --no-edit`                   |
 | `=` 🔥          | `git add --update . && git commit --amend --no-edit`          |
+| `;`             | `git show --name-status HEAD`                                 |
 | `Left      `    | `git switch -`                                                |
 | `Shift+Left`    | `git rebase --abort`                                          |
 | `Right` 🔥      | `git checkout $(fzf)` - Switch to branch from GUI             |
