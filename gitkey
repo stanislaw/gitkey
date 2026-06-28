@@ -44,6 +44,13 @@ class RFXCustomFormatter:
 
 
 class GitClient:
+    @staticmethod
+    def get_local_branch_name_from_remote_branch(branch_name: str) -> str:
+        if "/" not in branch_name:
+            return branch_name
+        _, local_branch_name = branch_name.split("/", 1)
+        return local_branch_name
+
     def add(self, include_untracked: bool = True, patch: bool = False) -> None:
         patch_string = "--patch" if patch else ""
         include_untracked_string = "--update" if not include_untracked else ""
@@ -202,10 +209,19 @@ class GitClient:
         if selected_branch:
             if selected_branch in local_branches:
                 # Switch to the selected local branch.
-                subprocess.run(["git", "switch", selected_branch], check=True)
+                self.checkout_existing_branch(selected_branch)
                 return
 
             if selected_branch in remote_branches:
+                local_branch_name = (
+                    self.get_local_branch_name_from_remote_branch(
+                        selected_branch
+                    )
+                )
+                if local_branch_name in local_branches:
+                    self.checkout_existing_branch(local_branch_name)
+                    return
+
                 # Create a local branch tracking the selected remote branch.
                 subprocess.run(
                     ["git", "switch", "--track", selected_branch], check=True
