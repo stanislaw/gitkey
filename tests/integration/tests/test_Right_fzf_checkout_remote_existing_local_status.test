@@ -1,0 +1,25 @@
+RUN: rm -rf %t
+RUN: mkdir -p %t/home %t/repo %t/remote %t/bin
+RUN: git init -b main --bare %t/remote
+RUN: cd %t/repo
+RUN: git init -b main
+RUN: git config user.name gitkey-test
+RUN: git config user.email gitkey-test@example.invalid
+RUN: echo "base" > README.txt
+RUN: git add README.txt
+RUN: git commit -m "Base commit"
+RUN: git remote add origin %t/remote
+RUN: git push -u origin main
+RUN: git checkout -b mettta/2946_table_toc_highlight
+RUN: echo "local" >> README.txt
+RUN: git add README.txt
+RUN: git commit -m "Local branch commit"
+RUN: git push -u origin mettta/2946_table_toc_highlight
+RUN: git checkout main
+RUN: git fetch origin
+RUN: printf '#!/bin/sh\ncat >/dev/null\necho origin/mettta/2946_table_toc_highlight\n' > %t/bin/fzf
+RUN: chmod +x %t/bin/fzf
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[C' | env %gitkey_env PATH=%t/bin:$PATH $GITKEY_BIN | filecheck %s"
+
+CHECK: On branch mettta/2946_table_toc_highlight
+CHECK: git status
