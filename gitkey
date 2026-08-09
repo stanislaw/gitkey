@@ -127,6 +127,19 @@ class GitClient:
         except subprocess.CalledProcessError:
             return False
 
+    def get_upstream_branch(self) -> Optional[str]:
+        args = [
+            "git",
+            "rev-parse",
+            "--abbrev-ref",
+            "--symbolic-full-name",
+            "@{u}",
+        ]
+        result = subprocess.run(args, capture_output=True, text=True)
+        if result.returncode != 0:
+            return None
+        return result.stdout.strip()
+
     def checkout_existing_branch(self, branch_name: str) -> None:
         assert isinstance(branch_name, str)
         args = ["git", "checkout", branch_name]
@@ -612,6 +625,31 @@ def main() -> None:
         git_client.reset_hard("HEAD^", include_untracked=False)
         git_client.status()
 
+    def resync_to_remote_flow() -> None:
+        upstream = git_client.get_upstream_branch()
+        if upstream is None:
+            print(
+                "error: no upstream branch configured for the current branch."
+            )
+            sys.exit(1)
+
+        git_client.status()
+        response = (
+            input(
+                f"This will discard local commits and changes, "
+                f"resetting to '{upstream}'. Continue? [y/n]: "
+            )
+            .strip()
+            .lower()
+        )
+        if response not in ["y", "yes"]:
+            print("Please enter 'y' or 'n'.")
+            sys.exit(1)
+
+        git_client.reset_hard(upstream, include_untracked=True)
+        git_client.clean_all()
+        git_client.status()
+
     def soft_reset_to_previous_commit_flow() -> None:
         git_client.status()
         response = input("Continue? [y/n]: ").strip().lower()
@@ -727,6 +765,7 @@ def main() -> None:
             lambda g: g.status(),
         ),
         "!": lambda _gc: hard_reset_flow(),
+        "7": lambda _gc: resync_to_remote_flow(),
         "8": lambda _gc: hard_reset_to_previous_commit_flow(),
         "9": lambda _gc: soft_reset_to_previous_commit_flow(),
         "0": lambda gc: run_chain(

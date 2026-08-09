@@ -1,0 +1,21 @@
+RUN: rm -rf %t
+RUN: mkdir -p %t/home %t/repo %t/remote
+RUN: git init -b main --bare %t/remote
+RUN: cd %t/repo
+RUN: git init -b main
+RUN: git config user.name gitkey-test
+RUN: git config user.email gitkey-test@example.invalid
+RUN: echo "first" > README.txt
+RUN: git add README.txt
+RUN: git commit -m "First commit"
+RUN: git remote add origin %t/remote
+RUN: git push -u origin main
+RUN: echo "diverged" >> README.txt
+RUN: git add README.txt
+RUN: git commit -m "Local-only commit"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '7y\n' | env %gitkey_env $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && test \"$(git log -1 --format=%%s)\" = 'First commit'"
+
+CHECK: git diff origin/main
+CHECK: git reset --hard origin/main
+CHECK: git status
