@@ -61,6 +61,7 @@ greatly reduce mental effort.
 | `{`             | `git stash --include-untracked`                               |
 | `]`             | `git stash pop`                                               |
 | `}`             | `git stash show --include-untracked`                          |
+| `?`             | Show this help message                                        |
 
 ## Installation
 
