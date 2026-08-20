@@ -16,6 +16,7 @@ greatly reduce mental effort.
 | Key / Shortcut  | Action                                                        |
 |-----------------|---------------------------------------------------------------|
 | `A`             | `git add .`                                                   |
+| `Ctrl+A` 🔥     | `git add <files>` - select file(s) to stage via fzf           |
 | `aa`            | `git add --update .`                                          |
 | `ap`            | `git add --patch --update .`                                  |
 | `aP`            | `git add --intent-to-add . && git add --patch`                |
