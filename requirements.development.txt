@@ -4,5 +4,5 @@ mypy
 ruff
 
 # Integration tests.
-lit
+lit<=23
 filecheck<1.0
