@@ -1,0 +1,27 @@
+RUN: rm -rf %t
+RUN: mkdir -p %t/home %t/repo
+RUN: cd %t/repo
+RUN: git init -b main
+RUN: git config user.name gitkey-test
+RUN: git config user.email gitkey-test@example.invalid
+RUN: echo "fixture" > README.txt
+RUN: git add README.txt
+RUN: git commit -m "Initial commit"
+RUN: git switch -c tester/foobar
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[19~' | env %gitkey_env $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && git rev-parse --verify tester/snapshots/$(date +%%Y%%m%%d)_foobar"
+RUN: %expect_exit 0 bash -c "cd %t/repo && test \"$(git branch --show-current)\" = 'tester/foobar'"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[19~' | env %gitkey_env $GITKEY_BIN | filecheck %s --check-prefix=SECOND"
+RUN: %expect_exit 0 bash -c "cd %t/repo && git rev-parse --verify tester/snapshots/$(date +%%Y%%m%%d)_foobar__2"
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[19~' | env %gitkey_env $GITKEY_BIN | filecheck %s --check-prefix=THIRD"
+RUN: %expect_exit 0 bash -c "cd %t/repo && git rev-parse --verify tester/snapshots/$(date +%%Y%%m%%d)_foobar__3"
+
+CHECK: git branch tester/snapshots/{{[0-9]{8}}}_foobar
+SECOND: git branch tester/snapshots/{{[0-9]{8}}}_foobar__2
+THIRD: git branch tester/snapshots/{{[0-9]{8}}}_foobar__3
+
+RUN: git checkout --detach
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[19~' | env %gitkey_env USER=Tester $GITKEY_BIN | filecheck %s --check-prefix=DETACHED"
+RUN: %expect_exit 0 bash -c "cd %t/repo && git rev-parse --verify tester/snapshots/$(date +%%Y%%m%%d)_$(git rev-parse --short HEAD)"
+
+DETACHED: git branch tester/snapshots/{{[0-9]{8}}}_{{[0-9a-f]+}}

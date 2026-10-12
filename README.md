@@ -61,6 +61,7 @@ greatly reduce mental effort.
 | `{`             | `git stash --include-untracked`                               |
 | `]`             | `git stash pop`                                               |
 | `}`             | `git stash show --include-untracked`                          |
+| `F8` 🔥         | `git branch <user>/snapshots/<YYYYMMDD>_<name>` - snapshot    |
 | `?`             | Show this help message                                        |
 
 ## Installation
