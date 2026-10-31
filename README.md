@@ -38,6 +38,7 @@ greatly reduce mental effort.
 | `O`             | `git checkout <branch>` - take branch from buffer             |
 | `S`             | `git status`                                                  |
 | `W`             | `git commit -m "WIP`                                          |
+| `6` 🔥          | `git reset --hard $(git merge-base HEAD origin/main)`         |
 | `7` 🔥          | `git reset --hard <upstream>` - resync local branch to remote |
 | `8`             | `git reset HEAD^ --hard`                                      |
 | `9`             | `git reset HEAD^`                                             |

@@ -44,6 +44,7 @@ greatly reduce mental effort.
 | `O`             | `git checkout <branch>` - take branch from buffer             |
 | `S`             | `git status`                                                  |
 | `W`             | `git commit -m "WIP`                                          |
+| `6` 🔥          | `git reset --hard $(git merge-base HEAD origin/main)`         |
 | `7` 🔥          | `git reset --hard <upstream>` - resync local branch to remote |
 | `8`             | `git reset HEAD^ --hard`                                      |
 | `9`             | `git reset HEAD^`                                             |
@@ -192,6 +193,15 @@ class GitClient:
             "--symbolic-full-name",
             "@{u}",
         ]
+        result = subprocess.run(args, capture_output=True, text=True)
+        if result.returncode != 0:
+            return None
+        return result.stdout.strip()
+
+    def get_merge_base(self, revision: str) -> Optional[str]:
+        args = ["git", "merge-base", "HEAD", revision]
+        command_color = RFXCustomFormatter.inverted
+        RFXCustomFormatter.print(" ".join(args), command_color)
         result = subprocess.run(args, capture_output=True, text=True)
         if result.returncode != 0:
             return None
@@ -761,6 +771,30 @@ def main() -> None:
         git_client.clean_all()
         git_client.status()
 
+    def reset_to_main_merge_base_flow() -> None:
+        merge_base = git_client.get_merge_base("origin/main")
+        if merge_base is None:
+            print("error: could not find a common ancestor with origin/main.")
+            sys.exit(1)
+
+        git_client.status()
+        response = (
+            input(
+                f"This will discard local commits and changes, "
+                f"resetting to the merge base with 'origin/main' "
+                f"({merge_base[:12]}). Continue? [y/n]: "
+            )
+            .strip()
+            .lower()
+        )
+        if response not in ["y", "yes"]:
+            print("Please enter 'y' or 'n'.")
+            sys.exit(1)
+
+        git_client.reset_hard(merge_base, include_untracked=True)
+        git_client.clean_all()
+        git_client.status()
+
     def snapshot_branch_flow() -> None:
         current_branch = git_client.get_current_branch()
 
@@ -926,6 +960,7 @@ def main() -> None:
             lambda g: g.status(),
         ),
         "!": lambda _gc: hard_reset_flow(),
+        "6": lambda _gc: reset_to_main_merge_base_flow(),
         "7": lambda _gc: resync_to_remote_flow(),
         "8": lambda _gc: hard_reset_to_previous_commit_flow(),
         "9": lambda _gc: soft_reset_to_previous_commit_flow(),
