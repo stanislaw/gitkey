@@ -1,0 +1,33 @@
+RUN: rm -rf %t
+RUN: mkdir -p %t/home %t/repo %t/remote
+RUN: git init -b main --bare %t/remote
+RUN: cd %t/repo
+RUN: git init -b main
+RUN: git config user.name gitkey-test
+RUN: git config user.email gitkey-test@example.invalid
+RUN: echo "first" > README.txt
+RUN: git add README.txt
+RUN: git commit -m "First commit"
+RUN: git remote add origin %t/remote
+RUN: git push -u origin main
+RUN: git switch -c feature
+RUN: echo "feature" >> README.txt
+RUN: git add README.txt
+RUN: git commit -m "Feature commit"
+RUN: git switch main
+RUN: echo "main" > MAIN.txt
+RUN: git add MAIN.txt
+RUN: git commit -m "Main commit"
+RUN: git push origin main
+RUN: git switch feature
+RUN: echo "untracked" > UNTRACKED.txt
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '6y\n' | env %gitkey_env $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "cd %t/repo && test \"$(git log -1 --format=%%s)\" = 'First commit'"
+RUN: %expect_exit 0 bash -c "cd %t/repo && test \"$(git symbolic-ref --short HEAD)\" = 'feature'"
+RUN: %expect_exit 0 bash -c "cd %t/repo && test ! -e UNTRACKED.txt"
+
+CHECK: git merge-base HEAD origin/main
+CHECK: git diff {{[0-9a-f]{40}}}
+CHECK: Creating a patch:
+CHECK: git reset --hard {{[0-9a-f]{40}}}
+CHECK: git status
