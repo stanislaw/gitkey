@@ -52,7 +52,7 @@ greatly reduce mental effort.
 | `Right` 🔥      | `git checkout $(fzf)` - Switch to branch from GUI             |
 | `Shift+Right`   | `git rebase --continue`                                       |
 | `Up`            | `git push`                                                    |
-| `Shift+Up`      | `git push --force`                                            |
+| `Shift+Up`      | `git push --force-with-lease --force-if-includes`             |
 | `Down`          | `git pull`                                                    |
 | `Shift+Down`    | `git pull --rebase`                                           |
 | `TAB` 🔥        | `git fetch origin && git rebase origin/main`                  |

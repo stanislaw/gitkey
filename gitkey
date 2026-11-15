@@ -58,7 +58,7 @@ greatly reduce mental effort.
 | `Right` 🔥      | `git checkout $(fzf)` - Switch to branch from GUI             |
 | `Shift+Right`   | `git rebase --continue`                                       |
 | `Up`            | `git push`                                                    |
-| `Shift+Up`      | `git push --force`                                            |
+| `Shift+Up`      | `git push --force-with-lease --force-if-includes`             |
 | `Down`          | `git pull`                                                    |
 | `Shift+Down`    | `git pull --rebase`                                           |
 | `TAB` 🔥        | `git fetch origin && git rebase origin/main`                  |
@@ -373,7 +373,7 @@ class GitClient:
     def push(self, force: bool = False) -> None:
         args = ["git", "push"]
         if force:
-            args.append("--force")
+            args.extend(["--force-with-lease", "--force-if-includes"])
         command_color = RFXCustomFormatter.inverted
         command = " ".join(args)
         RFXCustomFormatter.print(command, command_color)

@@ -12,5 +12,5 @@ RUN: git commit -m "Initial commit"
 RUN: git push -u origin main
 RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[1;2A' | env %gitkey_env $GITKEY_BIN | filecheck %s"
 
-CHECK: git push --force
+CHECK: git push --force-with-lease --force-if-includes
 CHECK: git status

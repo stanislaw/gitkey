@@ -1,0 +1,30 @@
+RUN: rm -rf %t
+RUN: mkdir -p %t/home %t/repo %t/remote.git
+RUN: git init -b main --bare %t/remote.git
+RUN: cd %t/repo
+RUN: git init -b main
+RUN: git config user.name gitkey-test
+RUN: git config user.email gitkey-test@example.invalid
+RUN: git remote add origin %t/remote.git
+RUN: echo "fixture" > README.txt
+RUN: git add README.txt
+RUN: git commit -m "Initial commit"
+RUN: git push -u origin main
+
+# A teammate pushes a commit on top of main.
+RUN: git clone %t/remote.git %t/teammate
+RUN: git -C %t/teammate config user.name gitkey-teammate
+RUN: git -C %t/teammate config user.email gitkey-teammate@example.invalid
+RUN: git -C %t/teammate commit --allow-empty -m "Teammate commit"
+RUN: git -C %t/teammate push origin main
+
+# A background fetch (e.g., by an IDE) moves origin/main to the teammate commit.
+# The local branch is then rewritten without integrating that commit.
+RUN: git fetch origin
+RUN: git commit --amend -m "Rewritten commit"
+
+RUN: %expect_exit 0 bash -c "cd %t/repo && printf '\033[1;2A' | env %gitkey_env $GITKEY_BIN | filecheck %s"
+RUN: %expect_exit 0 bash -c "test \"$(git --git-dir=%t/remote.git log -1 --format=%%s main)\" = 'Teammate commit'"
+
+CHECK: git push --force-with-lease --force-if-includes
+CHECK: git status
